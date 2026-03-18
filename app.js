@@ -199,6 +199,13 @@ function validateStep3() {
 
 // --- Optiesinfo ---
 
+function updateResetBtn() {
+    const hasSelections = state.selectedTables.length > 0 ||
+        state.selectedOps.length > 0 ||
+        state.cardCount !== null;
+    resetBtn.disabled = !hasSelections;
+}
+
 function updateOptiesinfo() {
     // Tafels
     if (state.selectedTables.length === 0) {
@@ -226,6 +233,8 @@ function updateOptiesinfo() {
     } else {
         optiesInfoKaarten.textContent = state.cardCount;
     }
+
+    updateResetBtn();
 }
 
 // --- Navigation ---
