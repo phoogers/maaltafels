@@ -315,28 +315,54 @@ header h1 {
 }
 
 #active-card {
+    position: relative;
+    z-index: 20;
+    width: 320px;
+    height: 160px;
+    perspective: 800px;
+}
+
+#active-card-inner {
+    position: relative;
     width: 100%;
-    max-width: 320px;
-    height: 140px;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+}
+
+#active-card-inner.flipped {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 3.5rem;
+    font-size: 4rem;
     color: #111;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    transition: opacity 0.25s ease, transform 0.25s ease;
+    backface-visibility: hidden;
 }
 
-#active-card.slide-left {
-    opacity: 0;
-    transform: translateX(-120px) rotate(-8deg);
+.card-back {
+    transform: rotateY(180deg);
 }
 
-#active-card.slide-right {
-    opacity: 0;
-    transform: translateX(120px) rotate(8deg);
+.spieken-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    width: fit-content;
+    margin: 0 auto;
+    font-size: 0.9rem;
+    opacity: 0.6;
+    z-index: 5;
 }
 
 #exercise-buttons {

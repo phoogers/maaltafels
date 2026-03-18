@@ -286,6 +286,7 @@ function resetState() {
                 <div id="pile-juist" class="pile"></div>
             </div>
         </div>
+        <button id="btn-spieken" class="action-btn secondary spieken-btn">Spieken</button>
     `;
     document.getElementById('btn-fout').addEventListener('click', () => answerCard(false));
     document.getElementById('btn-juist').addEventListener('click', () => answerCard(true));
@@ -429,15 +430,24 @@ function showNextCard() {
         progress.textContent = `Ronde ${state.round} — nog ${remaining} kaartje${remaining === 1 ? '' : 's'}`;
     }
 
-    // Reset card appearance
-    activeCardEl.className = '';
-    activeCardEl.style.background = state.data[state.currentCard.table].color;
-    activeCardEl.textContent = state.currentCard.front;
+    const bg = state.data[state.currentCard.table].color;
 
-    // Small delay to allow CSS reset before showing
+    // Build card with front and back faces
+    activeCardEl.style.transition = 'none';
+    activeCardEl.style.opacity = '0';
+    activeCardEl.style.transform = 'none';
+    activeCardEl.innerHTML = `
+        <div id="active-card-inner">
+            <div class="card-face card-front" style="background:${bg}">${state.currentCard.front}</div>
+            <div class="card-face card-back" style="background:${bg}">${state.currentCard.back}</div>
+        </div>
+    `;
+
+    // Force reflow, then fade in
+    activeCardEl.offsetHeight;
+    activeCardEl.style.transition = 'opacity 0.25s ease';
     requestAnimationFrame(() => {
         activeCardEl.style.opacity = '1';
-        activeCardEl.style.transform = 'translateX(0) rotate(0)';
     });
 }
 
@@ -448,27 +458,52 @@ function answerCard(correct) {
     const card = state.currentCard;
     state.currentCard = null;
 
-    // Slide animation
-    activeCardEl.classList.add(correct ? 'slide-right' : 'slide-left');
+    // Determine target pile and calculate where the new card will land
+    const pileId = correct ? 'pile-juist' : 'pile-fout';
+    const pileEl = document.getElementById(pileId);
+    const pile = correct ? state.juistPile : state.foutPile;
+    const step = 4; // must match renderPile step
+    const pileCardW = 80;
+    const pileCardH = 40;
+
+    // Position of pile top-left in viewport
+    const pileRect = pileEl.getBoundingClientRect();
+    // The new card will be at index pile.length, centered in pile
+    const targetTop = pileRect.top + pile.length * step;
+    const targetLeft = pileRect.left + pileRect.width / 2 - pileCardW / 2;
+
+    const cardRect = activeCardEl.getBoundingClientRect();
+    const rot = (Math.random() - 0.5) * 8;
+
+    // Scale: active card (320x160) -> pile card (80x40) — both 2:1, exact 0.25
+    const scale = pileCardW / cardRect.width;
+
+    // Translation: from active card center to target pile card center
+    const dx = (targetLeft + pileCardW / 2) - (cardRect.left + cardRect.width / 2);
+    const dy = (targetTop + pileCardH / 2) - (cardRect.top + cardRect.height / 2);
+
+    // Animate: shrink and fly to exact pile position
+    activeCardEl.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+    activeCardEl.style.transform = `translate(${dx}px, ${dy}px) scale(${scale}) rotate(${rot}deg)`;
 
     // Add to pile with fixed rotation
-    card.pileRot = (Math.random() - 0.5) * 8;
+    card.pileRot = rot;
     if (correct) {
         state.juistPile.push(card);
     } else {
         state.foutPile.push(card);
     }
-    updatePiles();
 
-    // After animation, show next card
+    // After animation lands, render pile (replaces flying card seamlessly) and show next
     setTimeout(() => {
+        updatePiles();
         const progress = document.getElementById('exercise-progress');
         const remaining = state.deck.length;
         if (remaining > 0) {
             progress.textContent = `Ronde ${state.round} — nog ${remaining} kaartje${remaining === 1 ? '' : 's'}`;
         }
         showNextCard();
-    }, 300);
+    }, 420);
 }
 
 function updatePiles() {
@@ -549,6 +584,19 @@ function launchConfetti() {
     });
 }
 
+function spieken() {
+    if (!state.currentCard) return;
+    const inner = document.getElementById('active-card-inner');
+    if (!inner || inner.classList.contains('flipped')) return;
+
+    inner.classList.add('flipped');
+
+    // Flip back after showing the answer
+    setTimeout(() => {
+        inner.classList.remove('flipped');
+    }, 500);
+}
+
 function confirmReset() {
     if (confirm('Wil je opnieuw beginnen? Alle selecties worden gewist.')) {
         resetState();
@@ -569,5 +617,8 @@ function attachEventListeners() {
     document.getElementById('begin-btn').addEventListener('click', beginExercise);
     document.getElementById('btn-fout').addEventListener('click', () => answerCard(false));
     document.getElementById('btn-juist').addEventListener('click', () => answerCard(true));
+    document.addEventListener('click', (e) => {
+        if (e.target.id === 'btn-spieken') spieken();
+    });
     resetBtn.addEventListener('click', confirmReset);
 }
