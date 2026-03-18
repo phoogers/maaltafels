@@ -119,8 +119,27 @@ function toggleOp(opBtn) {
     opsButtons.forEach(b => {
         b.classList.toggle('active', state.selectedOps.includes(b.dataset.op));
     });
+    updateSelectAllOpsLabel();
     validateStep2();
     updateOptiesinfo();
+}
+
+function selectAllOps() {
+    const allOps = ['multiplication', 'division'];
+    const allSelected = allOps.every(op => state.selectedOps.includes(op));
+    state.selectedOps = allSelected ? [] : [...allOps];
+    opsButtons.forEach(b => {
+        b.classList.toggle('active', state.selectedOps.includes(b.dataset.op));
+    });
+    updateSelectAllOpsLabel();
+    validateStep2();
+    updateOptiesinfo();
+}
+
+function updateSelectAllOpsLabel() {
+    const btn = document.getElementById('select-all-ops');
+    const allSelected = ['multiplication', 'division'].every(op => state.selectedOps.includes(op));
+    btn.textContent = allSelected ? 'Alles deselecteren' : 'Alles selecteren';
 }
 
 function validateStep2() {
@@ -502,6 +521,7 @@ function attachEventListeners() {
     selectAllBtn.addEventListener('click', selectAll);
     next1Btn.addEventListener('click', () => goToStep(2));
     opsButtons.forEach(btn => btn.addEventListener('click', () => toggleOp(btn)));
+    document.getElementById('select-all-ops').addEventListener('click', selectAllOps);
     back2Btn.addEventListener('click', () => goToStep(1));
     next2Btn.addEventListener('click', () => goToStep(3));
     back3Btn.addEventListener('click', () => goToStep(2));
