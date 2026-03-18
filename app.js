@@ -451,7 +451,8 @@ function answerCard(correct) {
     // Slide animation
     activeCardEl.classList.add(correct ? 'slide-right' : 'slide-left');
 
-    // Add to pile
+    // Add to pile with fixed rotation
+    card.pileRot = (Math.random() - 0.5) * 8;
     if (correct) {
         state.juistPile.push(card);
     } else {
@@ -479,17 +480,21 @@ function renderPile(pileId, cards) {
     const pile = document.getElementById(pileId);
     pile.innerHTML = '';
 
-    // Show top few cards as stacked visual
-    const show = cards.slice(-4);
-    show.forEach((card, i) => {
+    const step = 4;
+
+    // Show all cards stacked with small vertical offset
+    cards.forEach((card, i) => {
         const el = document.createElement('div');
         el.className = 'pile-card';
         el.style.background = state.data[card.table].color;
-        el.style.setProperty('--pile-rot', `${(Math.random() - 0.5) * 12}deg`);
-        el.style.bottom = (i * 3) + 'px';
+        el.style.setProperty('--pile-rot', `${card.pileRot}deg`);
+        el.style.top = (i * step) + 'px';
         el.textContent = card.front;
         pile.appendChild(el);
     });
+
+    // Set pile height to fit all cards
+    pile.style.height = cards.length > 0 ? (cards.length - 1) * step + 44 + 'px' : '';
 
     // Count label
     const count = document.createElement('div');
