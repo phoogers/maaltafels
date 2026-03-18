@@ -206,7 +206,7 @@ function updateOptiesinfo() {
     } else {
         const sorted = [...state.selectedTables].sort((a, b) => Number(a) - Number(b));
         optiesInfoTafels.innerHTML = sorted.map(t =>
-            `<span class="tafel-badge" style="background:${state.data[t].color}">${t}</span>`
+            `<span class="tafel-badge" style="--badge-color:${state.data[t].color}">${t}</span>`
         ).join(' ');
     }
 

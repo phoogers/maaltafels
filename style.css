@@ -11,7 +11,7 @@ html {
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background: #121218;
+    background: #0c0c14;
     color: #e8e8ef;
     min-height: 100%;
     -webkit-text-size-adjust: 100%;
@@ -35,7 +35,7 @@ header {
 
 header h1 {
     font-size: 1.5rem;
-    color: #818cf8;
+    color: #a5b4fc;
     letter-spacing: -0.02em;
 }
 
@@ -46,9 +46,11 @@ header h1 {
     transform: translateY(-50%);
     width: 40px;
     height: 40px;
-    border: 1px solid #2a2a3a;
-    border-radius: 10px;
-    background: #1e1e2a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: #9a9ab0;
     font-size: 1.3rem;
     cursor: pointer;
@@ -61,8 +63,8 @@ header h1 {
 }
 
 .reset-btn:active {
-    background: #2a2a3a;
-    color: #818cf8;
+    background: rgba(255, 255, 255, 0.12);
+    color: #a5b4fc;
 }
 
 /* Optiesinfo panel */
@@ -70,21 +72,23 @@ header h1 {
     position: sticky;
     top: 0;
     z-index: 10;
-    background: #1e1e2a;
-    border: 1px solid #2a2a3a;
+    background: rgba(18, 18, 28, 0.75);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     padding: 10px 14px;
     margin-bottom: 18px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
     gap: 6px;
     font-size: 0.85rem;
-    color: #9a9ab0;
+    color: #8888a0;
 }
 
 #optiesinfo strong {
-    color: #c0c0d0;
+    color: #b0b0c8;
 }
 
 #optiesinfo > div {
@@ -105,6 +109,9 @@ header h1 {
     color: #fff;
     font-size: 0.7rem;
     font-weight: bold;
+    border: 1.5px solid color-mix(in srgb, var(--badge-color) 70%, transparent);
+    background: color-mix(in srgb, var(--badge-color) 45%, transparent) !important;
+    box-shadow: 0 0 10px color-mix(in srgb, var(--badge-color) 25%, transparent);
 }
 
 /* Steps */
@@ -122,7 +129,7 @@ header h1 {
 .step h2 {
     font-size: 1.15rem;
     text-align: center;
-    color: #b0b0c8;
+    color: #a0a0be;
 }
 
 /* Button grid for tafels */
@@ -135,8 +142,8 @@ header h1 {
 
 /* Toggle buttons (tafels) */
 .toggle-btn {
-    border: 2px solid var(--btn-color, #444);
-    background: #1e1e2a;
+    border: 2px solid color-mix(in srgb, var(--btn-color) 35%, transparent);
+    background: color-mix(in srgb, var(--btn-color) 8%, transparent);
     color: var(--btn-color, #888);
     border-radius: 14px;
     font-size: 1.4rem;
@@ -144,7 +151,7 @@ header h1 {
     min-height: 64px;
     padding: 14px 0;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    transition: all 0.2s ease;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     touch-action: manipulation;
@@ -155,14 +162,15 @@ header h1 {
 }
 
 .toggle-btn.active {
-    background: var(--btn-color, #818cf8);
-    border-color: var(--btn-color, #818cf8);
+    background: color-mix(in srgb, var(--btn-color) 45%, transparent);
+    border-color: color-mix(in srgb, var(--btn-color) 70%, transparent);
     color: #fff;
-    box-shadow: 0 0 20px color-mix(in srgb, var(--btn-color) 40%, transparent);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--btn-color) 30%, transparent),
+                inset 0 0 20px color-mix(in srgb, var(--btn-color) 12%, transparent);
 }
 
 .toggle-btn:disabled {
-    opacity: 0.25;
+    opacity: 0.2;
     cursor: not-allowed;
     transform: none !important;
 }
@@ -199,7 +207,7 @@ header h1 {
 
 #beschikbaar-info {
     font-size: 0.95rem;
-    color: #7a7a90;
+    color: #6a6a80;
     text-align: center;
 }
 
@@ -212,7 +220,7 @@ header h1 {
     min-height: 48px;
     padding: 12px 24px;
     cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
+    transition: all 0.15s ease;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     touch-action: manipulation;
@@ -225,24 +233,27 @@ header h1 {
 .action-btn.primary {
     background: linear-gradient(135deg, #818cf8, #6366f1);
     color: #fff;
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3),
+                0 0 40px rgba(99, 102, 241, 0.1);
 }
 
 .action-btn.primary:disabled {
-    background: #2a2a3a;
-    color: #555;
+    background: rgba(255, 255, 255, 0.05);
+    color: #444;
     cursor: not-allowed;
     box-shadow: none;
 }
 
 .action-btn.secondary {
-    background: #1e1e2a;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: #9a9ab0;
-    border: 1px solid #2a2a3a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .action-btn.secondary:active {
-    background: #2a2a3a;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Step navigation */
@@ -262,7 +273,7 @@ header h1 {
 /* Practice screen */
 #deck-info {
     font-size: 1rem;
-    color: #9a9ab0;
+    color: #8888a0;
     text-align: center;
 }
 
@@ -285,8 +296,7 @@ header h1 {
     font-size: 1.15rem;
     color: #111;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-    /* Start stacked in center, dealt outward via JS */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
     opacity: 0;
     transform: scale(0.6) rotate(0deg);
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -301,21 +311,21 @@ header h1 {
 #exercise-progress {
     text-align: center;
     font-size: 0.95rem;
-    color: #9a9ab0;
+    color: #8888a0;
 }
 
 #active-card {
     width: 100%;
     max-width: 320px;
     height: 140px;
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 2rem;
     color: #111;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -361,15 +371,19 @@ header h1 {
 }
 
 .exercise-btn.fout {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.85), rgba(220, 38, 38, 0.85));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: #fff;
-    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25);
 }
 
 .exercise-btn.juist {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(22, 163, 74, 0.85));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: #fff;
-    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.25);
 }
 
 .pile {
@@ -391,13 +405,13 @@ header h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
 }
 
 .pile-count {
     text-align: center;
     font-size: 0.85rem;
-    color: #7a7a90;
+    color: #6a6a80;
     margin-top: 4px;
 }
 
@@ -414,25 +428,25 @@ header h1 {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #22c55e, #16a34a);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.9));
     color: #fff;
     font-size: 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.3),
+                0 4px 20px rgba(34, 197, 94, 0.4);
 }
 
 .finish-screen h2 {
-    color: #22c55e;
+    color: #4ade80;
     font-size: 1.5rem;
 }
 
 .finish-screen p {
-    color: #9a9ab0;
+    color: #8888a0;
     font-size: 1rem;
 }
-
 
 /* Small phones */
 @media (max-width: 360px) {
