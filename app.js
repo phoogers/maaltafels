@@ -507,6 +507,41 @@ function showFinished() {
             <p>${state.cards.length} kaartjes geoefend in ${state.round} ronde${state.round === 1 ? '' : 's'}</p>
         </div>
     `;
+    launchConfetti();
+}
+
+function launchConfetti() {
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 7,
+            angle: 60,
+            spread: 70,
+            origin: { x: 0, y: 0.6 },
+            colors: ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'],
+        });
+        confetti({
+            particleCount: 7,
+            angle: 120,
+            spread: 70,
+            origin: { x: 1, y: 0.6 },
+            colors: ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'],
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    })();
+
+    // Big center burst
+    confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { x: 0.5, y: 0.5 },
+        colors: ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', '#818cf8'],
+    });
 }
 
 function confirmReset() {
