@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(gh auth:*)",
+      "Bash(npx vercel:*)",
+      "Bash(gh repo:*)",
+      "WebFetch(domain:www.tiny.cloud)",
+      "WebFetch(domain:codepen.io)",
+      "WebFetch(domain:cdpn.io)",
+      "Bash(git add:*)"
+    ]
+  }
+}

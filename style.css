@@ -193,12 +193,59 @@ header h1 {
     color: #b0b0c8;
 }
 
-#optiesinfo > div {
+#optiesinfo > div,
+#optiesinfo .info-row > div {
     display: flex;
     align-items: center;
     gap: 5px;
     flex-wrap: wrap;
     min-height: 24px;
+}
+
+#optiesinfo .info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 24px;
+}
+
+.info-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.count-badge {
+    border: 1.5px solid rgba(52, 211, 153, 0.7);
+    background: rgba(52, 211, 153, 0.45) !important;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.25);
+}
+
+.mode-badge {
+    border: 1.5px solid rgba(167, 139, 250, 0.7);
+    background: rgba(167, 139, 250, 0.45) !important;
+    box-shadow: 0 0 10px rgba(167, 139, 250, 0.25);
+}
+
+.op-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: bold;
+    border: 1.5px solid rgba(129, 140, 248, 0.7);
+    background: rgba(129, 140, 248, 0.45) !important;
+    box-shadow: 0 0 10px rgba(129, 140, 248, 0.25);
 }
 
 .tafel-badge {
@@ -290,6 +337,21 @@ header h1 {
     font-size: 1.2rem;
     min-height: 64px;
     padding: 16px 0;
+}
+
+/* Mode grid */
+.mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+}
+
+.mode-btn {
+    --btn-color: #a78bfa;
+    font-size: 1.1rem;
+    min-height: 56px;
+    padding: 14px 0;
 }
 
 /* Count grid */
@@ -455,6 +517,71 @@ header h1 {
     transform: rotateY(180deg);
 }
 
+/* Multiple choice buttons (kind mode) */
+.mc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+}
+
+.mc-btn {
+    min-height: 64px;
+    border: 2px solid rgba(129, 140, 248, 0.3);
+    border-radius: 14px;
+    background: rgba(129, 140, 248, 0.1);
+    color: #c4c4ff;
+    font-size: 1.6rem;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s ease;
+}
+
+.mc-btn:active {
+    transform: scale(0.95);
+    background: rgba(129, 140, 248, 0.25);
+    border-color: rgba(129, 140, 248, 0.6);
+}
+
+.mc-btn.mc-wrong {
+    background: rgba(239, 68, 68, 0.35);
+    border-color: rgba(239, 68, 68, 0.7);
+    animation: mc-shake 0.4s ease;
+}
+
+@keyframes mc-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+/* Pile labels for kind mode */
+.exercise-piles-only {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+}
+
+.pile-label {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 6px 0;
+    border-radius: 8px;
+}
+
+.pile-label.fout-label {
+    color: rgba(239, 68, 68, 0.7);
+}
+
+.pile-label.juist-label {
+    color: rgba(34, 197, 94, 0.7);
+}
+
 .spieken-btn {
     position: fixed;
     bottom: 20px;
@@ -574,6 +701,46 @@ header h1 {
 .finish-screen p {
     color: #8888a0;
     font-size: 1rem;
+}
+
+.finish-stats {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.stat-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6a6a80;
+}
+
+.stat-juist .stat-value { color: #4ade80; }
+.stat-fout .stat-value { color: #f87171; }
+.stat-tijd .stat-value { color: #818cf8; }
+
+.finish-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-top: 12px;
 }
 
 /* Small phones */

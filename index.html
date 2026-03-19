@@ -28,9 +28,14 @@
         </header>
 
         <div id="optiesinfo">
-            <div id="info-tafels"><strong>Tafels:</strong> <span>-</span></div>
-            <div id="info-ops"><strong>Bewerkingen:</strong> <span>-</span></div>
-            <div id="info-kaarten"><strong>Kaartjes:</strong> <span>-</span></div>
+            <div class="info-row">
+                <div id="info-tafels"><strong>Tafels:</strong> <span>-</span></div>
+                <div id="info-ops"><strong>Bewerkingen:</strong> <span>-</span></div>
+            </div>
+            <div class="info-row">
+                <div id="info-kaarten"><strong>Kaartjes:</strong> <span>-</span></div>
+                <div id="info-mode"><strong>Mode:</strong> <span>Kind</span></div>
+            </div>
         </div>
 
         <!-- Stap 1: Kies tafels -->
@@ -59,6 +64,11 @@
 
         <!-- Stap 3: Hoeveel kaartjes? -->
         <div id="step3" class="step">
+            <h2>Hoe wil je oefenen?</h2>
+            <div id="mode-buttons" class="mode-grid">
+                <button class="toggle-btn mode-btn active" data-mode="kind">Kind</button>
+                <button class="toggle-btn mode-btn" data-mode="ouder">Ouder</button>
+            </div>
             <h2>Hoeveel kaartjes?</h2>
             <p id="beschikbaar-info"></p>
             <div id="count-buttons" class="count-grid"></div>

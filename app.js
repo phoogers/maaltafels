@@ -3,6 +3,7 @@ const state = {
     selectedTables: [],
     selectedOps: [],
     cardCount: null,
+    mode: 'kind',
     currentStep: 1,
     cards: [],
     deck: [],
@@ -10,12 +11,17 @@ const state = {
     juistPile: [],
     currentCard: null,
     round: 1,
+    cardShownAt: 0,
+    correctCount: 0,
+    wrongCount: 0,
+    correctTimes: [],
 };
 
 // DOM refs
 const optiesInfoTafels = document.querySelector('#info-tafels span');
 const optiesInfoOps = document.querySelector('#info-ops span');
 const optiesInfoKaarten = document.querySelector('#info-kaarten span');
+const optiesInfoMode = document.querySelector('#info-mode span');
 const tafelButtonsContainer = document.getElementById('tafel-buttons');
 const selectAllBtn = document.getElementById('select-all');
 const next1Btn = document.getElementById('next1');
@@ -193,6 +199,14 @@ function selectCount(c) {
     updateOptiesinfo();
 }
 
+function selectMode(mode) {
+    state.mode = mode;
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    updateOptiesinfo();
+}
+
 function validateStep3() {
     startBtn.disabled = state.cardCount === null;
 }
@@ -219,20 +233,24 @@ function updateOptiesinfo() {
 
     // Bewerkingen
     if (state.selectedOps.length === 0) {
-        optiesInfoOps.textContent = '-';
+        optiesInfoOps.innerHTML = '-';
     } else {
-        const labels = state.selectedOps.map(op =>
-            op === 'multiplication' ? 'X' : ':'
-        );
-        optiesInfoOps.textContent = labels.join(' en ');
+        optiesInfoOps.innerHTML = state.selectedOps.map(op => {
+            const label = op === 'multiplication' ? 'X' : ':';
+            return `<span class="op-badge">${label}</span>`;
+        }).join(' ');
     }
 
     // Kaartjes
     if (state.cardCount === null) {
-        optiesInfoKaarten.textContent = '-';
+        optiesInfoKaarten.innerHTML = '-';
     } else {
-        optiesInfoKaarten.textContent = state.cardCount;
+        optiesInfoKaarten.innerHTML = `<span class="info-badge count-badge">${state.cardCount}</span>`;
     }
+
+    // Mode
+    const modeLabel = state.mode === 'kind' ? 'Kind' : 'Ouder';
+    optiesInfoMode.innerHTML = `<span class="info-badge mode-badge">${modeLabel}</span>`;
 
     updateResetBtn();
 }
@@ -262,6 +280,7 @@ function resetState() {
     state.selectedTables = [];
     state.selectedOps = [];
     state.cardCount = null;
+    state.mode = 'kind';
     state.currentStep = 1;
     state.cards = [];
     state.deck = [];
@@ -269,6 +288,10 @@ function resetState() {
     state.juistPile = [];
     state.currentCard = null;
     state.round = 1;
+    state.cardShownAt = 0;
+    state.correctCount = 0;
+    state.wrongCount = 0;
+    state.correctTimes = [];
 
     updateTafelButtonStates();
     updateSelectAllLabel();
@@ -278,9 +301,12 @@ function resetState() {
     validateStep2();
 
     document.querySelectorAll('.count-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === 'kind');
+    });
     validateStep3();
 
-    // Restore exercise DOM if it was replaced by finish screen
+    // Restore exercise DOM — beginExercise will rebuild it per mode
     const exercise = document.getElementById('exercise');
     exercise.innerHTML = `
         <div id="exercise-progress"></div>
@@ -408,9 +434,110 @@ function beginExercise() {
     state.foutPile = [];
     state.juistPile = [];
     state.round = 1;
+    state.correctCount = 0;
+    state.wrongCount = 0;
+    state.correctTimes = [];
+
+    // Set up exercise DOM based on mode
+    const exercise = document.getElementById('exercise');
+    if (state.mode === 'kind') {
+        exercise.innerHTML = `
+            <div id="exercise-progress"></div>
+            <div id="active-card"></div>
+            <div id="mc-buttons" class="mc-grid"></div>
+            <div id="exercise-buttons" class="exercise-piles-only">
+                <div class="exercise-col">
+                    <div class="pile-label fout-label">Fout</div>
+                    <div id="pile-fout" class="pile"></div>
+                </div>
+                <div class="exercise-col">
+                    <div class="pile-label juist-label">Juist</div>
+                    <div id="pile-juist" class="pile"></div>
+                </div>
+            </div>
+        `;
+    } else {
+        exercise.innerHTML = `
+            <div id="exercise-progress"></div>
+            <div id="active-card"></div>
+            <div id="exercise-buttons">
+                <div class="exercise-col">
+                    <button id="btn-fout" class="exercise-btn fout">Fout</button>
+                    <div id="pile-fout" class="pile"></div>
+                </div>
+                <div class="exercise-col">
+                    <button id="btn-juist" class="exercise-btn juist">Juist</button>
+                    <div id="pile-juist" class="pile"></div>
+                </div>
+            </div>
+            <button id="btn-spieken" class="action-btn secondary spieken-btn">Spieken</button>
+        `;
+        document.getElementById('btn-fout').addEventListener('click', () => answerCard(false));
+        document.getElementById('btn-juist').addEventListener('click', () => answerCard(true));
+    }
 
     goToStep('exercise');
     showNextCard();
+}
+
+function mcConfettiFromBtn(btn) {
+    const rect = btn.getBoundingClientRect();
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+    confetti({
+        particleCount: 40,
+        spread: 60,
+        startVelocity: 20,
+        origin: { x, y },
+        colors: ['#22c55e', '#4ade80', '#34d399', '#a3e635', '#fbbf24'],
+        ticks: 60,
+        scalar: 0.8,
+    });
+}
+
+function mcShakeBtn(btn) {
+    btn.classList.add('mc-wrong');
+    setTimeout(() => btn.classList.remove('mc-wrong'), 500);
+}
+
+function generateMCOptions(card) {
+    const correctAnswer = card.back;
+    const correctNum = Number(correctAnswer);
+
+    // Collect all possible answers from the same table + operation
+    const tableData = state.data[card.table][card.op];
+    let pool = tableData.map(c => Number(c.back)).filter(n => n !== correctNum && (correctNum === 0 || n !== 0));
+
+    // If not enough distractors from same table, add from other selected tables
+    if (pool.length < 3) {
+        for (const t of state.selectedTables) {
+            if (t === card.table) continue;
+            for (const op of state.selectedOps) {
+                const extras = state.data[t][op].map(c => Number(c.back)).filter(n => correctNum === 0 || n !== 0);
+                pool.push(...extras);
+            }
+        }
+        pool = pool.filter(n => n !== correctNum);
+    }
+
+    // Deduplicate
+    pool = [...new Set(pool)];
+    shuffle(pool);
+
+    const distractors = pool.slice(0, 3);
+
+    // If still not enough (very unlikely), generate nearby numbers
+    while (distractors.length < 3) {
+        const offset = distractors.length + 1;
+        const candidate = correctNum + offset * (Math.random() > 0.5 ? 1 : -1);
+        if (candidate > 0 && candidate !== correctNum && !distractors.includes(candidate)) {
+            distractors.push(candidate);
+        }
+    }
+
+    const options = [correctNum, ...distractors];
+    shuffle(options);
+    return options.map(n => String(n));
 }
 
 function showNextCard() {
@@ -433,6 +560,7 @@ function showNextCard() {
     }
 
     state.currentCard = state.deck.shift();
+    state.cardShownAt = performance.now();
     const remaining = state.deck.length + 1;
 
     if (!progress.textContent.startsWith('Ronde')) {
@@ -458,10 +586,42 @@ function showNextCard() {
     requestAnimationFrame(() => {
         activeCardEl.style.opacity = '1';
     });
+
+    // Render MC buttons in kind mode
+    if (state.mode === 'kind') {
+        const mcContainer = document.getElementById('mc-buttons');
+        const options = generateMCOptions(state.currentCard);
+        mcContainer.innerHTML = '';
+        for (const opt of options) {
+            const btn = document.createElement('button');
+            btn.className = 'mc-btn';
+            btn.textContent = opt;
+            btn.addEventListener('click', () => {
+                if (!state.currentCard) return;
+                const correct = opt === state.currentCard.back;
+                if (correct) {
+                    mcConfettiFromBtn(btn);
+                    answerCard(true);
+                } else {
+                    mcShakeBtn(btn);
+                    answerCard(false);
+                }
+            });
+            mcContainer.appendChild(btn);
+        }
+    }
 }
 
 function answerCard(correct) {
     if (!state.currentCard) return;
+
+    const elapsed = (performance.now() - state.cardShownAt) / 1000;
+    if (correct) {
+        state.correctCount++;
+        state.correctTimes.push(elapsed);
+    } else {
+        state.wrongCount++;
+    }
 
     const activeCardEl = document.getElementById('active-card');
     const card = state.currentCard;
@@ -548,15 +708,50 @@ function renderPile(pileId, cards) {
 }
 
 function showFinished() {
+    const avgTime = state.correctTimes.length > 0
+        ? (state.correctTimes.reduce((a, b) => a + b, 0) / state.correctTimes.length).toFixed(2)
+        : '0.00';
+
     const exercise = document.getElementById('exercise');
     exercise.innerHTML = `
         <div class="finish-screen">
             <div class="finish-icon">&#10003;</div>
             <h2>Alles juist!</h2>
             <p>${state.cards.length} kaartjes geoefend in ${state.round} ronde${state.round === 1 ? '' : 's'}</p>
+            <div class="finish-stats">
+                <div class="stat-item stat-juist">
+                    <div class="stat-value">${state.correctCount}</div>
+                    <div class="stat-label">Juist</div>
+                </div>
+                <div class="stat-item stat-fout">
+                    <div class="stat-value">${state.wrongCount}</div>
+                    <div class="stat-label">Fout</div>
+                </div>
+                <div class="stat-item stat-tijd">
+                    <div class="stat-value">${avgTime}s</div>
+                    <div class="stat-label">Gem. per juist</div>
+                </div>
+            </div>
+            <div class="finish-buttons">
+                <button id="btn-restart-same" class="action-btn primary">Oefen opnieuw met dezelfde opties</button>
+                <button id="btn-restart-new" class="action-btn secondary">Begin helemaal opnieuw</button>
+            </div>
         </div>
     `;
+    document.getElementById('btn-restart-same').addEventListener('click', restartWithSameOptions);
+    document.getElementById('btn-restart-new').addEventListener('click', resetState);
     launchConfetti();
+}
+
+function restartWithSameOptions() {
+    state.cards = buildDeck();
+    state.deck = [...state.cards];
+    shuffle(state.deck);
+    state.foutPile = [];
+    state.juistPile = [];
+    state.currentCard = null;
+    state.round = 1;
+    beginExercise();
 }
 
 function launchConfetti() {
@@ -622,6 +817,9 @@ function attachEventListeners() {
     back2Btn.addEventListener('click', () => goToStep(1));
     next2Btn.addEventListener('click', () => goToStep(3));
     back3Btn.addEventListener('click', () => goToStep(2));
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectMode(btn.dataset.mode));
+    });
     startBtn.addEventListener('click', () => goToStep('practice'));
     document.getElementById('begin-btn').addEventListener('click', beginExercise);
     document.getElementById('btn-fout').addEventListener('click', () => answerCard(false));
