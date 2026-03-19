@@ -1,7 +1,7 @@
 {
     "1": {
         "enabled": true,
-        "color": "#FF6B6B",
+        "color": "#ffb87a",
         "multiplication": [
             { "front": "0 X 1 =", "back": "0" },
             { "front": "1 X 1 =", "back": "1" },
@@ -31,7 +31,7 @@
     },
     "2": {
         "enabled": true,
-        "color": "#FFA06B",
+        "color": "#ff6b1a",
         "multiplication": [
             { "front": "0 X 2 =", "back": "0" },
             { "front": "1 X 2 =", "back": "2" },
@@ -61,7 +61,7 @@
     },
     "3": {
         "enabled": true,
-        "color": "#FFD93D",
+        "color": "#9b59b6",
         "multiplication": [
             { "front": "0 X 3 =", "back": "0" },
             { "front": "1 X 3 =", "back": "3" },
@@ -91,7 +91,7 @@
     },
     "4": {
         "enabled": true,
-        "color": "#6BCB77",
+        "color": "#fff07a",
         "multiplication": [
             { "front": "0 X 4 =", "back": "0" },
             { "front": "1 X 4 =", "back": "4" },
@@ -121,7 +121,7 @@
     },
     "5": {
         "enabled": true,
-        "color": "#4D96FF",
+        "color": "#ffb3d9",
         "multiplication": [
             { "front": "0 X 5 =", "back": "0" },
             { "front": "1 X 5 =", "back": "5" },
@@ -151,7 +151,7 @@
     },
     "6": {
         "enabled": true,
-        "color": "#9B59B6",
+        "color": "#ff4da6",
         "multiplication": [
             { "front": "0 X 6 =", "back": "0" },
             { "front": "1 X 6 =", "back": "6" },
@@ -181,7 +181,7 @@
     },
     "7": {
         "enabled": true,
-        "color": "#E056A0",
+        "color": "#5ce65c",
         "multiplication": [
             { "front": "0 X 7 =", "back": "0" },
             { "front": "1 X 7 =", "back": "7" },
@@ -211,7 +211,7 @@
     },
     "8": {
         "enabled": true,
-        "color": "#00B4D8",
+        "color": "#e6e6e6",
         "multiplication": [
             { "front": "0 X 8 =", "back": "0" },
             { "front": "1 X 8 =", "back": "8" },
@@ -241,7 +241,7 @@
     },
     "9": {
         "enabled": true,
-        "color": "#F4845F",
+        "color": "#f54242",
         "multiplication": [
             { "front": "0 X 9 =", "back": "0" },
             { "front": "1 X 9 =", "back": "9" },
@@ -271,7 +271,7 @@
     },
     "10": {
         "enabled": true,
-        "color": "#2EC4B6",
+        "color": "#85c4ff",
         "multiplication": [
             { "front": "0 X 10 =", "back": "0" },
             { "front": "1 X 10 =", "back": "10" },
