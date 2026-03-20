@@ -758,13 +758,11 @@ function showFinished() {
 
 function restartWithSameOptions() {
     state.cards = buildDeck();
-    state.deck = [...state.cards];
-    shuffle(state.deck);
     state.foutPile = [];
     state.juistPile = [];
     state.currentCard = null;
     state.round = 1;
-    beginExercise();
+    goToStep('practice');
 }
 
 function launchConfetti() {
