@@ -18,7 +18,30 @@
         <header>
             <button id="reset-btn" class="reset-btn" title="Opnieuw beginnen" disabled>&#8634;</button>
             <h1>Maaltafels L2</h1>
+            <button id="feedback-btn" class="feedback-btn" title="Feedback">&#9993;</button>
         </header>
+
+        <!-- Feedback overlay -->
+        <div id="feedback-overlay" class="feedback-overlay" style="display:none;">
+            <div class="feedback-panel">
+                <h2>Feedback</h2>
+                <form id="feedback-form" action="https://api.web3forms.com/submit" method="POST">
+                    <input type="hidden" name="access_key" value="e2d5a936-6d4f-4bdd-8a96-bc841bd231fb">
+                    <input type="hidden" name="subject" value="Maaltafels L2 — Feedback">
+                    <input type="hidden" name="from_name" value="Maaltafels L2">
+                    <input type="checkbox" name="botcheck" style="display:none;">
+                    <textarea name="message" id="feedback-message" placeholder="Wat vind je goed? Wat kan beter?" rows="4" required></textarea>
+                    <div class="feedback-actions">
+                        <button type="button" id="feedback-cancel" class="action-btn secondary">Annuleren</button>
+                        <button type="submit" class="action-btn primary">Verstuur</button>
+                    </div>
+                </form>
+                <div id="feedback-success" style="display:none;">
+                    <p>Bedankt voor je feedback!</p>
+                    <button type="button" id="feedback-close" class="action-btn secondary">Sluiten</button>
+                </div>
+            </div>
+        </div>
 
         <div id="optiesinfo">
             <div class="info-row">

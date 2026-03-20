@@ -866,4 +866,45 @@ function attachEventListeners() {
         if (e.target.id === 'btn-spieken') spieken();
     });
     resetBtn.addEventListener('click', confirmReset);
+
+    // Feedback
+    const feedbackOverlay = document.getElementById('feedback-overlay');
+    const feedbackForm = document.getElementById('feedback-form');
+    const feedbackSuccess = document.getElementById('feedback-success');
+    document.getElementById('feedback-btn').addEventListener('click', () => {
+        feedbackOverlay.style.display = 'flex';
+    });
+    document.getElementById('feedback-cancel').addEventListener('click', () => {
+        feedbackOverlay.style.display = 'none';
+    });
+    document.getElementById('feedback-close').addEventListener('click', () => {
+        feedbackOverlay.style.display = 'none';
+        feedbackForm.style.display = '';
+        feedbackSuccess.style.display = 'none';
+        feedbackForm.reset();
+    });
+    feedbackOverlay.addEventListener('click', (e) => {
+        if (e.target === feedbackOverlay) {
+            feedbackOverlay.style.display = 'none';
+        }
+    });
+    feedbackForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = feedbackForm.querySelector('[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Versturen...';
+        try {
+            await fetch(feedbackForm.action, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.fromEntries(new FormData(feedbackForm))),
+            });
+            feedbackForm.style.display = 'none';
+            feedbackSuccess.style.display = '';
+        } catch {
+            alert('Versturen mislukt. Probeer later opnieuw.');
+        }
+        btn.disabled = false;
+        btn.textContent = 'Verstuur';
+    });
 }
