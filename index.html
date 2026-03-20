@@ -18,7 +18,13 @@
         <header>
             <button id="reset-btn" class="reset-btn" title="Opnieuw beginnen" disabled>&#8634;</button>
             <h1>Maaltafels L2</h1>
-            <button id="feedback-btn" class="feedback-btn" title="Feedback">&#9993;</button>
+            <div class="menu-wrapper">
+                <button id="menu-btn" class="menu-btn" title="Menu">&#9776;</button>
+                <div id="menu-dropdown" class="menu-dropdown" style="display:none;">
+                    <button class="menu-item" id="menu-feedback">Feedback</button>
+                    <button class="menu-item" id="menu-info">Info</button>
+                </div>
+            </div>
         </header>
 
         <!-- Feedback overlay -->
@@ -40,6 +46,21 @@
                     <p>Bedankt voor je feedback!</p>
                     <button type="button" id="feedback-close" class="action-btn secondary">Sluiten</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Info overlay -->
+        <div id="info-overlay" class="feedback-overlay" style="display:none;">
+            <div class="feedback-panel">
+                <h2>Over Maaltafels L2</h2>
+                <div class="info-content">
+                    <p>Een oefenapp voor de maaltafels, gemaakt voor kinderen van het lager onderwijs.</p>
+                    <p>Kies welke tafels en bewerkingen je wil oefenen, hoeveel kaartjes je wil, en ga aan de slag!</p>
+                    <p><strong>Kind-modus:</strong> kies het juiste antwoord uit 4 opties.</p>
+                    <p><strong>Ouder-modus:</strong> bekijk de vraag en duid zelf juist of fout aan.</p>
+                    <p>Foute kaartjes komen terug tot je alles juist hebt.</p>
+                </div>
+                <button type="button" id="info-close" class="action-btn secondary" style="width:100%;margin-top:14px;">Sluiten</button>
             </div>
         </div>
 

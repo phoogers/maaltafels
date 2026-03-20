@@ -867,11 +867,22 @@ function attachEventListeners() {
     });
     resetBtn.addEventListener('click', confirmReset);
 
+    // Menu
+    const menuBtn = document.getElementById('menu-btn');
+    const menuDropdown = document.getElementById('menu-dropdown');
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', () => {
+        menuDropdown.style.display = 'none';
+    });
+
     // Feedback
     const feedbackOverlay = document.getElementById('feedback-overlay');
     const feedbackForm = document.getElementById('feedback-form');
     const feedbackSuccess = document.getElementById('feedback-success');
-    document.getElementById('feedback-btn').addEventListener('click', () => {
+    document.getElementById('menu-feedback').addEventListener('click', () => {
         feedbackOverlay.style.display = 'flex';
     });
     document.getElementById('feedback-cancel').addEventListener('click', () => {
@@ -906,5 +917,19 @@ function attachEventListeners() {
         }
         btn.disabled = false;
         btn.textContent = 'Verstuur';
+    });
+
+    // Info
+    const infoOverlay = document.getElementById('info-overlay');
+    document.getElementById('menu-info').addEventListener('click', () => {
+        infoOverlay.style.display = 'flex';
+    });
+    document.getElementById('info-close').addEventListener('click', () => {
+        infoOverlay.style.display = 'none';
+    });
+    infoOverlay.addEventListener('click', (e) => {
+        if (e.target === infoOverlay) {
+            infoOverlay.style.display = 'none';
+        }
     });
 }
