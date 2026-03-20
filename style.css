@@ -29,6 +29,7 @@ body {
 /* Header */
 header {
     position: relative;
+    z-index: 20;
     text-align: center;
     padding: 20px 0 10px;
     display: flex;
