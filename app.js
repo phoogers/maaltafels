@@ -766,6 +766,20 @@ function showFinished() {
         },
     });
 
+    if (typeof gtag === 'function') {
+        gtag('event', 'round_completed', {
+            mode: state.mode,
+            tables: sorted.join(','),
+            ops: state.selectedOps.join(','),
+            card_count: state.cards.length,
+            rounds: state.round,
+            correct: state.correctCount,
+            wrong: state.wrongCount,
+            avg_time_per_correct: Number(avgTime),
+            total_time_sec: Math.round(totalMs / 1000),
+        });
+    }
+
     launchConfetti();
 }
 
