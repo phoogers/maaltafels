@@ -218,6 +218,7 @@ function updateResetBtn() {
         state.selectedOps.length > 0 ||
         state.cardCount !== null;
     resetBtn.disabled = !hasSelections;
+    document.getElementById('menu-reset').disabled = !hasSelections;
 }
 
 function updateOptiesinfo() {
@@ -597,6 +598,7 @@ function showNextCard() {
                 if (!state.currentCard) return;
                 const correct = opt === state.currentCard.back;
                 if (correct) {
+                    btn.classList.add('mc-correct');
                     mcConfettiFromBtn(btn);
                     answerCard(true);
                 } else {
@@ -711,32 +713,54 @@ function formatTotalTime(ms) {
     return min > 0 ? `${min}m ${sec}s` : `${sec}s`;
 }
 
+function getStarRating() {
+    const foutRatio = state.wrongCount / (state.correctCount + state.wrongCount);
+    if (foutRatio === 0) return 3;
+    if (foutRatio <= 0.15) return 2;
+    return 1;
+}
+
+function getMotivation(stars) {
+    const msgs3 = ['Waanzinnig!', 'Perfecte score!', 'Kampioen!', 'Ongelooflijk!', 'Supergoed!'];
+    const msgs2 = ['Heel goed gedaan!', 'Knap werk!', 'Bijna perfect!', 'Sterk bezig!'];
+    const msgs1 = ['Goed gedaan!', 'Goed geoefend!', 'Blijven oefenen!', 'Het lukt je!'];
+    const pool = stars === 3 ? msgs3 : stars === 2 ? msgs2 : msgs1;
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function showFinished() {
     const avgTime = state.correctTimes.length > 0
         ? (state.correctTimes.reduce((a, b) => a + b, 0) / state.correctTimes.length).toFixed(2)
         : '0.00';
     const totalTime = formatTotalTime(performance.now() - state.exerciseStartedAt);
+    const stars = getStarRating();
+    const motivation = getMotivation(stars);
+
+    const starsHtml = [1, 2, 3].map(i =>
+        `<span class="finish-star ${i <= stars ? 'star-earned' : 'star-empty'}" style="animation-delay:${i * 0.5}s">⭐</span>`
+    ).join('');
 
     const exercise = document.getElementById('exercise');
     exercise.innerHTML = `
         <div class="finish-screen">
-            <div class="finish-icon">&#10003;</div>
-            <h2>Alles juist!</h2>
+            <div class="finish-icon bounce-in">🏆</div>
+            <div class="finish-stars">${starsHtml}</div>
+            <h2 class="finish-motivation">${motivation}</h2>
             <p>${state.cards.length} kaartjes geoefend in ${state.round} ronde${state.round === 1 ? '' : 's'}</p>
             <div class="finish-stats">
-                <div class="stat-item stat-juist">
+                <div class="stat-item stat-juist stagger-in" style="animation-delay:0.6s">
                     <div class="stat-value">${state.correctCount}</div>
                     <div class="stat-label">Juist</div>
                 </div>
-                <div class="stat-item stat-fout">
+                <div class="stat-item stat-fout stagger-in" style="animation-delay:0.75s">
                     <div class="stat-value">${state.wrongCount}</div>
                     <div class="stat-label">Fout</div>
                 </div>
-                <div class="stat-item stat-tijd">
+                <div class="stat-item stat-tijd stagger-in" style="animation-delay:0.9s">
                     <div class="stat-value">${avgTime}s</div>
                     <div class="stat-label">Gem. per juist</div>
                 </div>
-                <div class="stat-item stat-totaal">
+                <div class="stat-item stat-totaal stagger-in" style="animation-delay:1.05s">
                     <div class="stat-value">${totalTime}</div>
                     <div class="stat-label">Totale tijd</div>
                 </div>
@@ -782,7 +806,7 @@ function showFinished() {
         });
     }
 
-    launchConfetti();
+    launchConfetti(stars);
 }
 
 function restartWithSameOptions() {
@@ -794,38 +818,30 @@ function restartWithSameOptions() {
     goToStep('practice');
 }
 
-function launchConfetti() {
-    const duration = 3000;
-    const end = Date.now() + duration;
+function launchConfetti(stars) {
+    const colors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
 
-    (function frame() {
-        confetti({
-            particleCount: 7,
-            angle: 60,
-            spread: 70,
-            origin: { x: 0, y: 0.6 },
-            colors: ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'],
-        });
-        confetti({
-            particleCount: 7,
-            angle: 120,
-            spread: 70,
-            origin: { x: 1, y: 0.6 },
-            colors: ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'],
-        });
+    // Star animation delays: 0.55s, 0.8s, 1.05s (delay + pop duration)
+    const starTimings = [500, 1000, 1500];
 
-        if (Date.now() < end) {
-            requestAnimationFrame(frame);
+    for (let i = 0; i < stars; i++) {
+        if (stars === 3 && i === 2) {
+            // Third star: 1.5s confetti stream
+            setTimeout(() => {
+                const end = Date.now() + 500;
+                (function stream() {
+                    confetti({ particleCount: 8, angle: 60, spread: 60, origin: { x: 0, y: 0.6 }, colors });
+                    confetti({ particleCount: 8, angle: 120, spread: 60, origin: { x: 1, y: 0.6 }, colors });
+                    if (Date.now() < end) requestAnimationFrame(stream);
+                })();
+            }, starTimings[i]);
+        } else {
+            setTimeout(() => {
+                confetti({ particleCount: 30, angle: 60, spread: 50, origin: { x: 0, y: 0.6 }, colors });
+                confetti({ particleCount: 30, angle: 120, spread: 50, origin: { x: 1, y: 0.6 }, colors });
+            }, starTimings[i]);
         }
-    })();
-
-    // Big center burst
-    confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { x: 0.5, y: 0.5 },
-        colors: ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', '#818cf8'],
-    });
+    }
 }
 
 function spieken() {
@@ -879,6 +895,7 @@ function attachEventListeners() {
     document.addEventListener('click', () => {
         menuDropdown.style.display = 'none';
     });
+    document.getElementById('menu-reset').addEventListener('click', confirmReset);
 
     // Feedback
     const feedbackOverlay = document.getElementById('feedback-overlay');
