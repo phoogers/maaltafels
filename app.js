@@ -437,6 +437,7 @@ function beginExercise() {
     state.correctCount = 0;
     state.wrongCount = 0;
     state.correctTimes = [];
+    state.exerciseStartedAt = performance.now();
 
     // Set up exercise DOM based on mode
     const exercise = document.getElementById('exercise');
@@ -707,10 +708,18 @@ function renderPile(pileId, cards) {
     pile.appendChild(count);
 }
 
+function formatTotalTime(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    return min > 0 ? `${min}m ${sec}s` : `${sec}s`;
+}
+
 function showFinished() {
     const avgTime = state.correctTimes.length > 0
         ? (state.correctTimes.reduce((a, b) => a + b, 0) / state.correctTimes.length).toFixed(2)
         : '0.00';
+    const totalTime = formatTotalTime(performance.now() - state.exerciseStartedAt);
 
     const exercise = document.getElementById('exercise');
     exercise.innerHTML = `
@@ -730,6 +739,10 @@ function showFinished() {
                 <div class="stat-item stat-tijd">
                     <div class="stat-value">${avgTime}s</div>
                     <div class="stat-label">Gem. per juist</div>
+                </div>
+                <div class="stat-item stat-totaal">
+                    <div class="stat-value">${totalTime}</div>
+                    <div class="stat-label">Totale tijd</div>
                 </div>
             </div>
             <div class="finish-buttons">
