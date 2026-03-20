@@ -236,10 +236,11 @@ function updateOptiesinfo() {
     }).join('');
 
     // Kaartjes
+    const available = getAvailableCardCount();
     if (state.cardCount === null) {
-        optiesInfoKaarten.innerHTML = '-';
+        optiesInfoKaarten.innerHTML = `<span class="info-badge count-badge badge-dim">-</span> / <span class="info-badge count-badge badge-dim">${available}</span>`;
     } else {
-        optiesInfoKaarten.innerHTML = `<span class="info-badge count-badge">${state.cardCount}</span>`;
+        optiesInfoKaarten.innerHTML = `<span class="info-badge count-badge">${state.cardCount}</span> / <span class="info-badge count-badge badge-dim">${available}</span>`;
     }
 
     // Mode
@@ -292,6 +293,7 @@ function resetState() {
     validateStep1();
 
     opsButtons.forEach(b => b.classList.remove('active'));
+    updateSelectAllOpsLabel();
     validateStep2();
 
     document.querySelectorAll('.count-btn').forEach(btn => btn.classList.remove('active'));
