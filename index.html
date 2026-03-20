@@ -17,6 +17,7 @@
     <meta name="twitter:image" content="https://maaltafels-five.vercel.app/icon-180.png">
     <link rel="apple-touch-icon" href="icon-180.png">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
     <title>Maaltafels L2</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,6 +34,7 @@
                 <button id="menu-btn" class="menu-btn" title="Menu">&#9776;</button>
                 <div id="menu-dropdown" class="menu-dropdown" style="display:none;">
                     <button class="menu-item" id="menu-info">ℹ️ Info</button>
+                    <button class="menu-item" id="menu-install">📲 Installeer als app</button>
                     <button class="menu-item" id="menu-feedback">💬 Feedback</button>
                 </div>
             </div>
@@ -72,6 +74,15 @@
                     <p>Foute kaartjes komen terug tot je alles juist hebt.</p>
                 </div>
                 <button type="button" id="info-close" class="action-btn secondary" style="width:100%;margin-top:14px;">Sluiten</button>
+            </div>
+        </div>
+
+        <!-- Install overlay -->
+        <div id="install-overlay" class="feedback-overlay" style="display:none;">
+            <div class="feedback-panel">
+                <h2>Installeer als app</h2>
+                <div id="install-instructions" class="info-content"></div>
+                <button type="button" id="install-close" class="action-btn secondary" style="width:100%;margin-top:14px;">Sluiten</button>
             </div>
         </div>
 

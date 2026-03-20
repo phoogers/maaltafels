@@ -934,4 +934,56 @@ function attachEventListeners() {
             infoOverlay.style.display = 'none';
         }
     });
+
+    // Install
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+    });
+
+    const installOverlay = document.getElementById('install-overlay');
+    const installInstructions = document.getElementById('install-instructions');
+    const menuInstallBtn = document.getElementById('menu-install');
+
+    // Hide install option if already running as installed app
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        menuInstallBtn.style.display = 'none';
+    }
+
+    menuInstallBtn.addEventListener('click', () => {
+        if (deferredInstallPrompt) {
+            // Android/Chrome: trigger native install prompt
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then(() => {
+                deferredInstallPrompt = null;
+            });
+        } else {
+            // Show manual instructions
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            if (isIOS) {
+                installInstructions.innerHTML = `
+                    <p>Volg deze stappen om Maaltafels L2 als app te installeren:</p>
+                    <p><strong>1.</strong> Tik op het deel-icoon <span class="install-icon">⎙</span> onderaan in Safari</p>
+                    <p><strong>2.</strong> Scroll naar beneden en tik op <strong>"Zet op beginscherm"</strong></p>
+                    <p><strong>3.</strong> Tik op <strong>"Voeg toe"</strong></p>
+                `;
+            } else {
+                installInstructions.innerHTML = `
+                    <p>Volg deze stappen om Maaltafels L2 als app te installeren:</p>
+                    <p><strong>1.</strong> Open het menu van je browser <span class="install-icon">⋮</span></p>
+                    <p><strong>2.</strong> Tik op <strong>"App installeren"</strong> of <strong>"Toevoegen aan startscherm"</strong></p>
+                `;
+            }
+            installOverlay.style.display = 'flex';
+        }
+    });
+    document.getElementById('install-close').addEventListener('click', () => {
+        installOverlay.style.display = 'none';
+    });
+    installOverlay.addEventListener('click', (e) => {
+        if (e.target === installOverlay) {
+            installOverlay.style.display = 'none';
+        }
+    });
 }
