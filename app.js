@@ -221,25 +221,19 @@ function updateResetBtn() {
 }
 
 function updateOptiesinfo() {
-    // Tafels
-    if (state.selectedTables.length === 0) {
-        optiesInfoTafels.innerHTML = '-';
-    } else {
-        const sorted = [...state.selectedTables].sort((a, b) => Number(a) - Number(b));
-        optiesInfoTafels.innerHTML = sorted.map(t =>
-            `<span class="tafel-badge" style="--badge-color:${state.data[t].color}">${t}</span>`
-        ).join(' ');
-    }
+    // Tafels — always show all, dim unselected
+    const allTables = Object.keys(state.data).sort((a, b) => Number(a) - Number(b));
+    optiesInfoTafels.innerHTML = allTables.map(t => {
+        const selected = state.selectedTables.includes(t);
+        return `<span class="tafel-badge${selected ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color}">${t}</span>`;
+    }).join('');
 
-    // Bewerkingen
-    if (state.selectedOps.length === 0) {
-        optiesInfoOps.innerHTML = '-';
-    } else {
-        optiesInfoOps.innerHTML = state.selectedOps.map(op => {
-            const label = op === 'multiplication' ? 'X' : ':';
-            return `<span class="op-badge">${label}</span>`;
-        }).join(' ');
-    }
+    // Bewerkingen — always show both, dim unselected
+    const allOps = [['multiplication', 'X'], ['division', ':']];
+    optiesInfoOps.innerHTML = allOps.map(([op, label]) => {
+        const selected = state.selectedOps.includes(op);
+        return `<span class="op-badge${selected ? '' : ' badge-dim'}">${label}</span>`;
+    }).join('');
 
     // Kaartjes
     if (state.cardCount === null) {
@@ -753,6 +747,22 @@ function showFinished() {
     `;
     document.getElementById('btn-restart-same').addEventListener('click', restartWithSameOptions);
     document.getElementById('btn-restart-new').addEventListener('click', resetState);
+
+    // Telemetry
+    const totalMs = performance.now() - state.exerciseStartedAt;
+    const sorted = [...state.selectedTables].sort((a, b) => Number(a) - Number(b));
+    window.va?.track('round_completed', {
+        mode: state.mode,
+        tables: sorted.join(','),
+        ops: state.selectedOps.join(','),
+        cardCount: state.cards.length,
+        rounds: state.round,
+        correct: state.correctCount,
+        wrong: state.wrongCount,
+        avgTimePerCorrect: Number(avgTime),
+        totalTimeSec: Math.round(totalMs / 1000),
+    });
+
     launchConfetti();
 }
 
