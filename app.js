@@ -945,21 +945,24 @@ function attachEventListeners() {
     const installOverlay = document.getElementById('install-overlay');
     const installInstructions = document.getElementById('install-instructions');
     const menuInstallBtn = document.getElementById('menu-install');
+    const installBanner = document.getElementById('install-banner');
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const isMobile = /Android|iPhone|iPad|iPod/.test(navigator.userAgent);
 
-    // Hide install option if already running as installed app
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    // Only show install options on mobile and not already installed
+    if (isStandalone || !isMobile) {
         menuInstallBtn.style.display = 'none';
+    } else {
+        installBanner.style.display = 'flex';
     }
 
-    menuInstallBtn.addEventListener('click', () => {
+    function triggerInstall() {
         if (deferredInstallPrompt) {
-            // Android/Chrome: trigger native install prompt
             deferredInstallPrompt.prompt();
             deferredInstallPrompt.userChoice.then(() => {
                 deferredInstallPrompt = null;
             });
         } else {
-            // Show manual instructions
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
             if (isIOS) {
                 installInstructions.innerHTML = `
@@ -977,7 +980,18 @@ function attachEventListeners() {
             }
             installOverlay.style.display = 'flex';
         }
+    }
+
+    function dismissBanner() {
+        installBanner.style.display = 'none';
+    }
+
+    menuInstallBtn.addEventListener('click', triggerInstall);
+    document.getElementById('install-banner-btn').addEventListener('click', () => {
+        dismissBanner();
+        triggerInstall();
     });
+    document.getElementById('install-banner-close').addEventListener('click', dismissBanner);
     document.getElementById('install-close').addEventListener('click', () => {
         installOverlay.style.display = 'none';
     });
