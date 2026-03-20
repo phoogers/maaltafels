@@ -968,7 +968,7 @@ function attachEventListeners() {
                 installInstructions.innerHTML = `
                     <p>Volg deze stappen om Maaltafels L2 als app te installeren:</p>
                     <p><strong>1.</strong> Tik op het deel-icoon <span class="install-icon">⎙</span> onderaan in Safari</p>
-                    <p><strong>2.</strong> Scroll naar beneden en tik op <strong>"Zet op beginscherm"</strong></p>
+                    <p><strong>2.</strong> Scroll naar beneden en tik op <strong>"Zet op beginscherm"</strong> (of <strong>"Add to Home Screen"</strong>)</p>
                     <p><strong>3.</strong> Tik op <strong>"Voeg toe"</strong></p>
                 `;
             } else {
