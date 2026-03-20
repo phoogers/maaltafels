@@ -751,16 +751,19 @@ function showFinished() {
     // Telemetry
     const totalMs = performance.now() - state.exerciseStartedAt;
     const sorted = [...state.selectedTables].sort((a, b) => Number(a) - Number(b));
-    window.va?.track('round_completed', {
-        mode: state.mode,
-        tables: sorted.join(','),
-        ops: state.selectedOps.join(','),
-        cardCount: state.cards.length,
-        rounds: state.round,
-        correct: state.correctCount,
-        wrong: state.wrongCount,
-        avgTimePerCorrect: Number(avgTime),
-        totalTimeSec: Math.round(totalMs / 1000),
+    window.va?.('event', {
+        name: 'round_completed',
+        data: {
+            mode: state.mode,
+            tables: sorted.join(','),
+            ops: state.selectedOps.join(','),
+            cardCount: state.cards.length,
+            rounds: state.round,
+            correct: state.correctCount,
+            wrong: state.wrongCount,
+            avgTimePerCorrect: Number(avgTime),
+            totalTimeSec: Math.round(totalMs / 1000),
+        },
     });
 
     launchConfetti();
