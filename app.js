@@ -774,6 +774,37 @@ function showFinished() {
     document.getElementById('btn-restart-same').addEventListener('click', restartWithSameOptions);
     document.getElementById('btn-restart-new').addEventListener('click', resetState);
 
+    // Trophy confetti on tap/click (only with 3 stars)
+    if (stars === 3) {
+        const trophy = exercise.querySelector('.finish-icon');
+        let trophyConfettiId = null;
+
+        function startTrophyConfetti() {
+            if (trophyConfettiId) return;
+            const colors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
+            (function burst() {
+                const rect = trophy.getBoundingClientRect();
+                const x = (rect.left + rect.width / 2) / window.innerWidth;
+                const y = (rect.top + rect.height / 2) / window.innerHeight;
+                confetti({ particleCount: 12, spread: 360, origin: { x, y }, colors, startVelocity: 20, gravity: 0.6, ticks: 60 });
+                trophyConfettiId = requestAnimationFrame(burst);
+            })();
+        }
+
+        function stopTrophyConfetti() {
+            if (trophyConfettiId) {
+                cancelAnimationFrame(trophyConfettiId);
+                trophyConfettiId = null;
+            }
+        }
+
+        trophy.style.cursor = 'pointer';
+        trophy.addEventListener('pointerdown', startTrophyConfetti);
+        trophy.addEventListener('pointerup', stopTrophyConfetti);
+        trophy.addEventListener('pointerleave', stopTrophyConfetti);
+        trophy.addEventListener('pointercancel', stopTrophyConfetti);
+    }
+
     // Telemetry
     const totalMs = performance.now() - state.exerciseStartedAt;
     const sorted = [...state.selectedTables].sort((a, b) => Number(a) - Number(b));
