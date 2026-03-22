@@ -799,7 +799,9 @@ function showFinished() {
         }
 
         trophy.style.cursor = 'pointer';
-        trophy.addEventListener('pointerdown', startTrophyConfetti);
+        trophy.style.userSelect = 'none';
+        trophy.style.webkitUserSelect = 'none';
+        trophy.addEventListener('pointerdown', (e) => { e.preventDefault(); startTrophyConfetti(); });
         trophy.addEventListener('pointerup', stopTrophyConfetti);
         trophy.addEventListener('pointerleave', stopTrophyConfetti);
         trophy.addEventListener('pointercancel', stopTrophyConfetti);
