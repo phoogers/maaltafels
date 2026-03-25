@@ -274,6 +274,25 @@ function playTapSound() {
     osc.stop(now + 0.08);
 }
 
+function playNewRecordSound() {
+    if (!soundEnabled) return;
+    const now = audioCtx.currentTime;
+    const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+    notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.12);
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.setValueAtTime(0.18, now + i * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.3);
+        osc.start(now + i * 0.12);
+        osc.stop(now + i * 0.12 + 0.3);
+    });
+}
+
 function playCorrectSound() {
     if (!soundEnabled) return;
     const now = audioCtx.currentTime;
@@ -1261,6 +1280,9 @@ function showFinished() {
     }
 
     launchConfetti(stars);
+    if (prResult.isNew) {
+        setTimeout(() => playNewRecordSound(), 1000);
+    }
 }
 
 function restartWithSameOptions() {
