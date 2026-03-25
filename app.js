@@ -139,8 +139,10 @@ function updatePRDisplay() {
 
     prList.querySelectorAll('.pr-entry-delete').forEach(btn => {
         btn.addEventListener('click', () => {
-            localStorage.removeItem(btn.dataset.key);
-            updatePRDisplay();
+            if (confirm('Wil je dit record wissen?')) {
+                localStorage.removeItem(btn.dataset.key);
+                updatePRDisplay();
+            }
         });
     });
 }
