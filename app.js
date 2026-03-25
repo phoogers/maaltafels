@@ -59,7 +59,7 @@ function toggleSound() {
 function getPRKey() {
     const tables = [...state.selectedTables].sort((a, b) => Number(a) - Number(b)).join(',');
     const ops = [...state.selectedOps].sort().join(',');
-    return `pr_${tables}_${ops}`;
+    return `pr_${tables}_${ops}_${state.mode}`;
 }
 
 function getAllPRKeys() {
@@ -87,11 +87,12 @@ function resetAllPersonalRecords() {
 }
 
 function parsePRKey(key) {
-    // pr_1,2,3_multiplication,division
+    // pr_1,2,3_multiplication,division_kind
     const parts = key.split('_');
     const tables = parts[1].split(',');
     const ops = parts[2].split(',');
-    return { tables, ops };
+    const mode = parts[3] || 'kind';
+    return { tables, ops, mode };
 }
 
 function updatePRDisplay() {
@@ -114,26 +115,41 @@ function updatePRDisplay() {
         key,
         time: Number(localStorage.getItem(key)),
         ...parsePRKey(key),
-    })).sort((a, b) => a.time - b.time);
+    })).sort((a, b) => {
+        if (a.mode !== b.mode) return a.mode === 'kind' ? -1 : 1;
+        return a.time - b.time;
+    });
 
     prList.innerHTML = entries.map(entry => {
-        const tafelBadges = allTables.map(t => {
+        const firstRow = allTables.slice(0, 5).map(t => {
             const active = entry.tables.includes(t);
             return `<span class="tafel-badge${active ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color};width:18px;height:18px;font-size:0.55rem;">${t}</span>`;
         }).join('');
 
-        const opBadges = allOps.map(([op, label]) => {
-            const active = entry.ops.includes(op);
-            return `<span class="op-badge${active ? '' : ' badge-dim'}" style="width:18px;height:18px;font-size:0.55rem;">${label}</span>`;
+        const multActive = entry.ops.includes('multiplication');
+        const firstRowOp = `<span class="op-badge${multActive ? '' : ' badge-dim'}" style="width:18px;height:18px;font-size:0.55rem;">X</span>`;
+
+        const secondRow = allTables.slice(5).map(t => {
+            const active = entry.tables.includes(t);
+            return `<span class="tafel-badge${active ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color};width:18px;height:18px;font-size:0.55rem;">${t}</span>`;
         }).join('');
 
+        const divActive = entry.ops.includes('division');
+        const secondRowOp = `<span class="op-badge${divActive ? '' : ' badge-dim'}" style="width:18px;height:18px;font-size:0.55rem;">:</span>`;
+
+        const modeLabel = entry.mode === 'kind' ? 'Kind' : 'Ouder';
+        const modeBadge = `<span class="info-badge mode-badge" style="height:18px;font-size:0.55rem;padding:0 6px;">${modeLabel}</span>`;
+
         return `<div class="pr-entry">
-            <div class="pr-entry-options">
-                <div class="pr-entry-badges">${tafelBadges}</div>
-                <div class="pr-entry-meta">${opBadges}</div>
+            <div class="pr-entry-top">
+                <div class="pr-entry-options">
+                    <div class="pr-entry-badges">${firstRow}${firstRowOp}</div>
+                    <div class="pr-entry-badges">${secondRow}${secondRowOp}${modeBadge}</div>
+                </div>
+                <div class="pr-entry-value">${entry.time.toFixed(2)}s</div>
+                <button class="pr-entry-delete" data-key="${entry.key}" title="Wissen">&times;</button>
             </div>
-            <div class="pr-entry-value">${entry.time.toFixed(2)}s</div>
-            <button class="pr-entry-delete" data-key="${entry.key}" title="Wissen">&times;</button>
+            <button class="pr-entry-challenge" data-tables="${entry.tables.join(',')}" data-ops="${entry.ops.join(',')}" data-mode="${entry.mode}">Probeer te verbeteren!</button>
         </div>`;
     }).join('');
 
@@ -145,6 +161,63 @@ function updatePRDisplay() {
             }
         });
     });
+
+    prList.querySelectorAll('.pr-entry-challenge').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tables = btn.dataset.tables.split(',');
+            const ops = btn.dataset.ops.split(',');
+            const mode = btn.dataset.mode;
+            challengePR(tables, ops, mode);
+        });
+    });
+}
+
+function challengePR(tables, ops, mode) {
+    // Close records overlay
+    document.getElementById('records-overlay').style.display = 'none';
+
+    // Reset state
+    state.selectedTables = [];
+    state.selectedOps = [];
+    state.cardCount = null;
+    state.mode = 'kind';
+    state.cards = [];
+    state.deck = [];
+    state.foutPile = [];
+    state.juistPile = [];
+    state.currentCard = null;
+    state.round = 1;
+    state.cardShownAt = 0;
+    state.correctCount = 0;
+    state.wrongCount = 0;
+    state.correctTimes = [];
+    state.timeLimit = 0;
+    clearTimerBar();
+
+    // Set tables and ops from the PR entry
+    state.selectedTables = [...tables];
+    state.selectedOps = [...ops];
+    state.mode = mode;
+
+    // Update UI to reflect selections
+    updateTafelButtonStates();
+    updateSelectAllLabel();
+    validateStep1();
+    opsButtons.forEach(b => {
+        b.classList.toggle('active', state.selectedOps.includes(b.dataset.op));
+    });
+    updateSelectAllOpsLabel();
+    validateStep2();
+    document.querySelectorAll('.count-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    document.querySelectorAll('.timer-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.timer === '0');
+    });
+
+    updateOptiesinfo();
+    goToStep(3);
 }
 
 function checkPersonalRecord(avgTime) {
@@ -663,7 +736,7 @@ function startPractice() {
 
     const pr = getPersonalRecord();
     if (pr !== null) {
-        practicePR.innerHTML = `Je huidige persoonlijk record is <strong class="practice-pr-value">${pr.toFixed(2)}s</strong>. Succes!`;
+        practicePR.innerHTML = `Je persoonlijk record is <strong class="practice-pr-value">${pr.toFixed(2)}s</strong>. Succes!`;
     }
 
     setTimeout(() => {
@@ -1074,7 +1147,7 @@ function showFinished() {
     ).join('');
 
     const prClass = prResult.isNew ? ' has-pr' : '';
-    const prBadgeHtml = prResult.isNew ? '<span class="pr-badge stagger-in" style="animation-delay:1s">Nieuw PR!</span>' : '';
+    const prBadgeHtml = prResult.isNew ? '<span class="pr-badge stagger-in" style="animation-delay:1s">Nieuw record!</span>' : '';
 
     let prDeltaHtml = '';
     if (prResult.prevPR !== null) {
@@ -1284,22 +1357,33 @@ function attachEventListeners() {
     // Settings
     const settingsOverlay = document.getElementById('settings-overlay');
     updateSoundToggle();
-    updatePRDisplay();
     document.getElementById('settings-btn').addEventListener('click', () => {
-        updatePRDisplay();
         settingsOverlay.style.display = 'flex';
     });
     document.getElementById('sound-toggle').addEventListener('click', toggleSound);
-    document.getElementById('pr-reset').addEventListener('click', () => {
-        if (confirm('Ben je zeker dat je alle persoonlijke records wil wissen?')) {
-            resetAllPersonalRecords();
-        }
-    });
     document.getElementById('settings-close').addEventListener('click', () => {
         settingsOverlay.style.display = 'none';
     });
     settingsOverlay.addEventListener('click', (e) => {
         if (e.target === settingsOverlay) settingsOverlay.style.display = 'none';
+    });
+
+    // Records
+    const recordsOverlay = document.getElementById('records-overlay');
+    document.getElementById('menu-records').addEventListener('click', () => {
+        updatePRDisplay();
+        recordsOverlay.style.display = 'flex';
+    });
+    document.getElementById('pr-reset').addEventListener('click', () => {
+        if (confirm('Ben je zeker dat je alle persoonlijke records wil wissen?')) {
+            resetAllPersonalRecords();
+        }
+    });
+    document.getElementById('records-close').addEventListener('click', () => {
+        recordsOverlay.style.display = 'none';
+    });
+    recordsOverlay.addEventListener('click', (e) => {
+        if (e.target === recordsOverlay) recordsOverlay.style.display = 'none';
     });
 
     // Feedback

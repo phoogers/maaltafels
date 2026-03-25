@@ -35,6 +35,7 @@
                 <button id="menu-btn" class="menu-btn" title="Menu">&#9776;</button>
                 <div id="menu-dropdown" class="menu-dropdown" style="display:none;">
                     <button class="menu-item" id="menu-reset" disabled>🔄 Opnieuw beginnen</button>
+                    <button class="menu-item" id="menu-records">🏆 Persoonlijke records</button>
                     <button class="menu-item" id="menu-info">ℹ️ Info</button>
                     <button class="menu-item" id="menu-install">📲 Installeer als app</button>
                     <button class="menu-item" id="menu-feedback">💬 Feedback</button>
@@ -101,13 +102,19 @@
                         <span class="sound-toggle-label">Uit</span>
                     </button>
                 </div>
-                <div class="settings-divider"></div>
-                <div class="settings-pr-header">
-                    <span class="settings-label">Persoonlijke records</span>
-                    <button id="pr-reset" class="action-btn secondary settings-pr-reset" disabled>Alles wissen</button>
-                </div>
-                <div id="pr-list" class="pr-list"></div>
                 <button type="button" id="settings-close" class="action-btn secondary" style="width:100%;margin-top:18px;">Sluiten</button>
+            </div>
+        </div>
+
+        <!-- Records overlay -->
+        <div id="records-overlay" class="feedback-overlay" style="display:none;">
+            <div class="feedback-panel records-panel">
+                <h2>Persoonlijke records</h2>
+                <div id="pr-list" class="pr-list"></div>
+                <div class="records-actions">
+                    <button id="pr-reset" class="action-btn secondary settings-pr-reset" disabled>Alles wissen</button>
+                    <button type="button" id="records-close" class="action-btn secondary">Sluiten</button>
+                </div>
             </div>
         </div>
 
