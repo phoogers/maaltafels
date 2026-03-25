@@ -337,6 +337,24 @@ header h1 {
     white-space: nowrap;
 }
 
+.pr-entry-delete {
+    border: none;
+    background: none;
+    color: #6a6a80;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s ease;
+}
+
+.pr-entry-delete:active {
+    color: #f87171;
+}
+
 /* PR badge on finish screen */
 .stat-item.has-pr {
     position: relative;

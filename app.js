@@ -133,8 +133,16 @@ function updatePRDisplay() {
                 <div class="pr-entry-meta">${opBadges}</div>
             </div>
             <div class="pr-entry-value">${entry.time.toFixed(2)}s</div>
+            <button class="pr-entry-delete" data-key="${entry.key}" title="Wissen">&times;</button>
         </div>`;
     }).join('');
+
+    prList.querySelectorAll('.pr-entry-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            localStorage.removeItem(btn.dataset.key);
+            updatePRDisplay();
+        });
+    });
 }
 
 function checkPersonalRecord(avgTime) {
@@ -1281,7 +1289,7 @@ function attachEventListeners() {
     });
     document.getElementById('sound-toggle').addEventListener('click', toggleSound);
     document.getElementById('pr-reset').addEventListener('click', () => {
-        if (confirm('Wil je je persoonlijk record wissen?')) {
+        if (confirm('Ben je zeker dat je alle persoonlijke records wil wissen?')) {
             resetAllPersonalRecords();
         }
     });
