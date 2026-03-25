@@ -30,6 +30,7 @@
         <header>
             <button id="reset-btn" class="reset-btn" title="Opnieuw beginnen" disabled>&#8634;</button>
             <h1>Maaltafels L2</h1>
+            <button id="settings-btn" class="settings-btn" title="Instellingen">&#9881;</button>
             <div class="menu-wrapper">
                 <button id="menu-btn" class="menu-btn" title="Menu">&#9776;</button>
                 <div id="menu-dropdown" class="menu-dropdown" style="display:none;">
@@ -87,14 +88,40 @@
             </div>
         </div>
 
+        <!-- Settings overlay -->
+        <div id="settings-overlay" class="feedback-overlay" style="display:none;">
+            <div class="feedback-panel">
+                <h2>Instellingen</h2>
+                <div class="settings-row">
+                    <span class="settings-label">Geluid</span>
+                    <button id="sound-toggle" class="sound-toggle" role="switch" aria-checked="false">
+                        <span class="sound-toggle-track">
+                            <span class="sound-toggle-thumb"></span>
+                        </span>
+                        <span class="sound-toggle-label">Uit</span>
+                    </button>
+                </div>
+                <div class="settings-divider"></div>
+                <div class="settings-pr-header">
+                    <span class="settings-label">Persoonlijke records</span>
+                    <button id="pr-reset" class="action-btn secondary settings-pr-reset" disabled>Alles wissen</button>
+                </div>
+                <div id="pr-list" class="pr-list"></div>
+                <button type="button" id="settings-close" class="action-btn secondary" style="width:100%;margin-top:18px;">Sluiten</button>
+            </div>
+        </div>
+
         <div id="optiesinfo">
             <div class="info-row">
                 <div id="info-tafels"><span>-</span></div>
                 <div id="info-ops"><span>-</span></div>
             </div>
             <div class="info-row">
-                <div id="info-kaarten"><strong>Aantal kaartjes:</strong> <span>-</span></div>
-                <div id="info-mode"><strong>Mode:</strong> <span>Kind</span></div>
+                <div id="info-kaarten"><strong>Kaartjes:</strong> <span>-</span></div>
+                <div class="info-row-right">
+                    <div id="info-mode"><span>Kind</span></div>
+                    <div id="info-timer"><span>-</span></div>
+                </div>
             </div>
         </div>
 
@@ -144,6 +171,13 @@
                     <span class="mode-desc">Zelf juist of fout aanduiden</span>
                 </button>
             </div>
+            <h2>Tijdslimiet per vraag?</h2>
+            <div id="timer-buttons" class="timer-grid">
+                <button class="toggle-btn timer-btn active" data-timer="0">Geen</button>
+                <button class="toggle-btn timer-btn" data-timer="10">10s</button>
+                <button class="toggle-btn timer-btn" data-timer="5">5s</button>
+                <button class="toggle-btn timer-btn" data-timer="3">3s</button>
+            </div>
             <h2>Hoeveel kaartjes?</h2>
             <p id="beschikbaar-info"></p>
             <div id="count-buttons" class="count-grid"></div>
@@ -157,6 +191,7 @@
         <div id="practice" class="step">
             <div id="deck-info"></div>
             <div id="card-area"></div>
+            <div id="practice-pr" class="practice-pr" style="display:none;"></div>
             <button id="begin-btn" class="action-btn primary" style="display:none;">Beginnen!</button>
         </div>
 

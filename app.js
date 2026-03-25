@@ -15,6 +15,8 @@ const state = {
     correctCount: 0,
     wrongCount: 0,
     correctTimes: [],
+    timeLimit: 0,
+    timerId: null,
 };
 
 // DOM refs
@@ -22,6 +24,7 @@ const optiesInfoTafels = document.querySelector('#info-tafels span');
 const optiesInfoOps = document.querySelector('#info-ops span');
 const optiesInfoKaarten = document.querySelector('#info-kaarten span');
 const optiesInfoMode = document.querySelector('#info-mode span');
+const optiesInfoTimer = document.querySelector('#info-timer span');
 const tafelButtonsContainer = document.getElementById('tafel-buttons');
 const selectAllBtn = document.getElementById('select-all');
 const next1Btn = document.getElementById('next1');
@@ -33,6 +36,193 @@ const beschikbaarInfo = document.getElementById('beschikbaar-info');
 const back3Btn = document.getElementById('back3');
 const startBtn = document.getElementById('start-btn');
 const resetBtn = document.getElementById('reset-btn');
+
+// --- Sound effects (Web Audio API) ---
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let soundEnabled = localStorage.getItem('soundEnabled') === 'true';
+
+function updateSoundToggle() {
+    const toggle = document.getElementById('sound-toggle');
+    toggle.classList.toggle('active', soundEnabled);
+    toggle.setAttribute('aria-checked', soundEnabled);
+    toggle.querySelector('.sound-toggle-label').textContent = soundEnabled ? 'Aan' : 'Uit';
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    localStorage.setItem('soundEnabled', soundEnabled);
+    updateSoundToggle();
+    if (soundEnabled && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function getPRKey() {
+    const tables = [...state.selectedTables].sort((a, b) => Number(a) - Number(b)).join(',');
+    const ops = [...state.selectedOps].sort().join(',');
+    return `pr_${tables}_${ops}`;
+}
+
+function getAllPRKeys() {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('pr_')) keys.push(key);
+    }
+    return keys;
+}
+
+function getPersonalRecord() {
+    const val = localStorage.getItem(getPRKey());
+    return val ? Number(val) : null;
+}
+
+function setPersonalRecord(avgTime) {
+    localStorage.setItem(getPRKey(), avgTime);
+    updatePRDisplay();
+}
+
+function resetAllPersonalRecords() {
+    getAllPRKeys().forEach(key => localStorage.removeItem(key));
+    updatePRDisplay();
+}
+
+function parsePRKey(key) {
+    // pr_1,2,3_multiplication,division
+    const parts = key.split('_');
+    const tables = parts[1].split(',');
+    const ops = parts[2].split(',');
+    return { tables, ops };
+}
+
+function updatePRDisplay() {
+    const prKeys = getAllPRKeys();
+    const prList = document.getElementById('pr-list');
+    const prReset = document.getElementById('pr-reset');
+
+    if (prKeys.length === 0) {
+        prList.innerHTML = '<div class="pr-list-empty">Nog geen records</div>';
+        prReset.disabled = true;
+        return;
+    }
+
+    prReset.disabled = false;
+    const allTables = Object.keys(state.data).sort((a, b) => Number(a) - Number(b));
+    const allOps = [['multiplication', 'X'], ['division', ':']];
+
+    // Sort by best time
+    const entries = prKeys.map(key => ({
+        key,
+        time: Number(localStorage.getItem(key)),
+        ...parsePRKey(key),
+    })).sort((a, b) => a.time - b.time);
+
+    prList.innerHTML = entries.map(entry => {
+        const tafelBadges = allTables.map(t => {
+            const active = entry.tables.includes(t);
+            return `<span class="tafel-badge${active ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color};width:18px;height:18px;font-size:0.55rem;">${t}</span>`;
+        }).join('');
+
+        const opBadges = allOps.map(([op, label]) => {
+            const active = entry.ops.includes(op);
+            return `<span class="op-badge${active ? '' : ' badge-dim'}" style="width:18px;height:18px;font-size:0.55rem;">${label}</span>`;
+        }).join('');
+
+        return `<div class="pr-entry">
+            <div class="pr-entry-options">
+                <div class="pr-entry-badges">${tafelBadges}</div>
+                <div class="pr-entry-meta">${opBadges}</div>
+            </div>
+            <div class="pr-entry-value">${entry.time.toFixed(2)}s</div>
+        </div>`;
+    }).join('');
+}
+
+function checkPersonalRecord(avgTime) {
+    const prevPR = getPersonalRecord();
+    const isNew = prevPR === null || avgTime < prevPR;
+    if (isNew) setPersonalRecord(avgTime);
+    return { isNew, prevPR };
+}
+
+function playSelectSound() {
+    if (!soundEnabled) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);  // A4
+    osc.frequency.exponentialRampToValueAtTime(520, now + 0.06);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc.start(now);
+    osc.stop(now + 0.12);
+}
+
+function playDeselectSound() {
+    if (!soundEnabled) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);  // A4
+    osc.frequency.exponentialRampToValueAtTime(360, now + 0.06);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc.start(now);
+    osc.stop(now + 0.12);
+}
+
+function playTapSound() {
+    if (!soundEnabled) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(480, now);
+    gain.gain.setValueAtTime(0.07, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.start(now);
+    osc.stop(now + 0.08);
+}
+
+function playCorrectSound() {
+    if (!soundEnabled) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523, now);       // C5
+    osc.frequency.setValueAtTime(659, now + 0.08); // E5
+    osc.frequency.setValueAtTime(784, now + 0.16); // G5
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.start(now);
+    osc.stop(now + 0.35);
+}
+
+function playWrongSound() {
+    if (!soundEnabled) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(120, now + 0.2);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.start(now);
+    osc.stop(now + 0.25);
+}
 
 // Load data and init
 state.data = MAALTAFELS_DATA;
@@ -69,8 +259,10 @@ function toggleTable(t) {
     const idx = state.selectedTables.indexOf(t);
     if (idx === -1) {
         state.selectedTables.push(t);
+        playSelectSound();
     } else {
         state.selectedTables.splice(idx, 1);
+        playDeselectSound();
     }
     updateTafelButtonStates();
     updateSelectAllLabel();
@@ -99,8 +291,10 @@ function selectAll() {
     const allSelected = allTables.every(t => state.selectedTables.includes(t));
     if (allSelected) {
         state.selectedTables = [];
+        playDeselectSound();
     } else {
         state.selectedTables = [...allTables];
+        playSelectSound();
     }
     updateTafelButtonStates();
     updateSelectAllLabel();
@@ -119,8 +313,10 @@ function toggleOp(opBtn) {
     const idx = state.selectedOps.indexOf(op);
     if (idx === -1) {
         state.selectedOps.push(op);
+        playSelectSound();
     } else {
         state.selectedOps.splice(idx, 1);
+        playDeselectSound();
     }
     opsButtons.forEach(b => {
         b.classList.toggle('active', state.selectedOps.includes(b.dataset.op));
@@ -134,6 +330,7 @@ function selectAllOps() {
     const allOps = ['multiplication', 'division'];
     const allSelected = allOps.every(op => state.selectedOps.includes(op));
     state.selectedOps = allSelected ? [] : [...allOps];
+    allSelected ? playDeselectSound() : playSelectSound();
     opsButtons.forEach(b => {
         b.classList.toggle('active', state.selectedOps.includes(b.dataset.op));
     });
@@ -191,7 +388,9 @@ function updateCountButtons() {
 function selectCount(c) {
     const available = getAvailableCardCount();
     if (c > available) return;
-    state.cardCount = state.cardCount === c ? null : c;
+    const wasSelected = state.cardCount === c;
+    state.cardCount = wasSelected ? null : c;
+    wasSelected ? playDeselectSound() : playSelectSound();
     document.querySelectorAll('.count-btn').forEach(btn => {
         btn.classList.toggle('active', Number(btn.dataset.count) === state.cardCount);
     });
@@ -201,10 +400,30 @@ function selectCount(c) {
 
 function selectMode(mode) {
     state.mode = mode;
+    playTapSound();
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === mode);
     });
     updateOptiesinfo();
+}
+
+function selectTimer(seconds) {
+    state.timeLimit = seconds;
+    playTapSound();
+    document.querySelectorAll('.timer-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.timer) === seconds);
+    });
+    updateOptiesinfo();
+}
+
+function autoSelectCount() {
+    if (state.cardCount !== null) return;
+    const available = getAvailableCardCount();
+    if (available >= 20) {
+        state.cardCount = 20;
+    } else if (available >= 10) {
+        state.cardCount = 10;
+    }
 }
 
 function validateStep3() {
@@ -248,6 +467,10 @@ function updateOptiesinfo() {
     const modeLabel = state.mode === 'kind' ? 'Kind' : 'Ouder';
     optiesInfoMode.innerHTML = `<span class="info-badge mode-badge">${modeLabel}</span>`;
 
+    // Timer
+    const timerLabel = state.timeLimit > 0 ? `${state.timeLimit}s` : '∞';
+    optiesInfoTimer.innerHTML = `<span class="info-badge timer-badge">${timerLabel}</span>`;
+
     updateResetBtn();
 }
 
@@ -260,7 +483,9 @@ function goToStep(step) {
     if (step === 1) document.getElementById('step1').classList.add('active');
     if (step === 2) document.getElementById('step2').classList.add('active');
     if (step === 3) {
+        autoSelectCount();
         updateCountButtons();
+        updateOptiesinfo();
         document.getElementById('step3').classList.add('active');
     }
     if (step === 'practice') {
@@ -288,6 +513,8 @@ function resetState() {
     state.correctCount = 0;
     state.wrongCount = 0;
     state.correctTimes = [];
+    state.timeLimit = 0;
+    clearTimerBar();
 
     updateTafelButtonStates();
     updateSelectAllLabel();
@@ -300,6 +527,9 @@ function resetState() {
     document.querySelectorAll('.count-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === 'kind');
+    });
+    document.querySelectorAll('.timer-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.timer === '0');
     });
     validateStep3();
 
@@ -415,10 +645,19 @@ function startPractice() {
         }, 80 + i * 50);
     });
 
-    // Show "Beginnen!" button after deal animation completes
+    // Show PR panel + "Beginnen!" button after deal animation completes
+    const practicePR = document.getElementById('practice-pr');
     const beginBtn = document.getElementById('begin-btn');
+    practicePR.style.display = 'none';
     beginBtn.style.display = 'none';
+
+    const pr = getPersonalRecord();
+    if (pr !== null) {
+        practicePR.innerHTML = `Je huidige persoonlijk record is <strong class="practice-pr-value">${pr.toFixed(2)}s</strong>. Succes!`;
+    }
+
     setTimeout(() => {
+        if (pr !== null) practicePR.style.display = '';
         beginBtn.style.display = '';
     }, dealDuration + 400);
 }
@@ -437,10 +676,12 @@ function beginExercise() {
     state.exerciseStartedAt = performance.now();
 
     // Set up exercise DOM based on mode
+    const timerBarHtml = state.timeLimit > 0 ? '<div class="timer-bar-container"><div id="timer-bar" class="timer-bar"></div></div>' : '';
     const exercise = document.getElementById('exercise');
     if (state.mode === 'kind') {
         exercise.innerHTML = `
             <div id="exercise-progress"></div>
+            ${timerBarHtml}
             <div id="active-card"></div>
             <div id="mc-buttons" class="mc-grid"></div>
             <div id="exercise-buttons" class="exercise-piles-only">
@@ -457,6 +698,7 @@ function beginExercise() {
     } else {
         exercise.innerHTML = `
             <div id="exercise-progress"></div>
+            ${timerBarHtml}
             <div id="active-card"></div>
             <div id="exercise-buttons">
                 <div class="exercise-col">
@@ -538,6 +780,78 @@ function generateMCOptions(card) {
     return options.map(n => String(n));
 }
 
+function startTimerBar() {
+    if (state.timeLimit <= 0) return;
+    clearTimerBar();
+    const bar = document.getElementById('timer-bar');
+    if (!bar) return;
+    const duration = state.timeLimit * 1000;
+    const start = performance.now();
+    bar.style.width = '100%';
+    bar.className = 'timer-bar';
+
+    function tick() {
+        const elapsed = performance.now() - start;
+        const fraction = Math.max(0, 1 - elapsed / duration);
+        bar.style.width = (fraction * 100) + '%';
+        bar.style.transitionDuration = '0s';
+
+        if (fraction <= 0.25) {
+            bar.className = 'timer-bar danger';
+        } else if (fraction <= 0.5) {
+            bar.className = 'timer-bar warning';
+        }
+
+        if (fraction <= 0) {
+            state.timerId = null;
+            onTimerExpired();
+            return;
+        }
+        state.timerId = requestAnimationFrame(tick);
+    }
+    state.timerId = requestAnimationFrame(tick);
+}
+
+function clearTimerBar() {
+    if (state.timerId) {
+        cancelAnimationFrame(state.timerId);
+        state.timerId = null;
+    }
+}
+
+function onTimerExpired() {
+    if (!state.currentCard) return;
+    playWrongSound();
+
+    // Register the wrong answer and fly card to pile immediately
+    answerCard(false, true);
+
+    // Show countdown overlay before showing next card
+    const exercise = document.getElementById('exercise');
+    const overlay = document.createElement('div');
+    overlay.className = 'timeout-overlay';
+    overlay.innerHTML = '<div class="timeout-text">Net te laat!</div><div class="timeout-countdown">Volgende vraag in <span id="timeout-num">3</span></div>';
+    exercise.appendChild(overlay);
+
+    const numEl = overlay.querySelector('#timeout-num');
+    let count = 3;
+    numEl.classList.add('timeout-num-pop');
+
+    const countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            numEl.textContent = count;
+            numEl.classList.remove('timeout-num-pop');
+            void numEl.offsetHeight;
+            numEl.classList.add('timeout-num-pop');
+        } else {
+            clearInterval(countdownInterval);
+            overlay.remove();
+            showNextCard();
+        }
+    }, 1000);
+}
+
 function showNextCard() {
     const activeCardEl = document.getElementById('active-card');
     const progress = document.getElementById('exercise-progress');
@@ -609,17 +923,22 @@ function showNextCard() {
             mcContainer.appendChild(btn);
         }
     }
+
+    startTimerBar();
 }
 
-function answerCard(correct) {
+function answerCard(correct, deferNext) {
     if (!state.currentCard) return;
+    clearTimerBar();
 
     const elapsed = (performance.now() - state.cardShownAt) / 1000;
     if (correct) {
         state.correctCount++;
         state.correctTimes.push(elapsed);
+        playCorrectSound();
     } else {
         state.wrongCount++;
+        if (!deferNext) playWrongSound();
     }
 
     const activeCardEl = document.getElementById('active-card');
@@ -665,12 +984,14 @@ function answerCard(correct) {
     // After animation lands, render pile (replaces flying card seamlessly) and show next
     setTimeout(() => {
         updatePiles();
-        const progress = document.getElementById('exercise-progress');
-        const remaining = state.deck.length;
-        if (remaining > 0) {
-            progress.textContent = `Ronde ${state.round} — nog ${remaining} kaartje${remaining === 1 ? '' : 's'}`;
+        if (!deferNext) {
+            const progress = document.getElementById('exercise-progress');
+            const remaining = state.deck.length;
+            if (remaining > 0) {
+                progress.textContent = `Ronde ${state.round} — nog ${remaining} kaartje${remaining === 1 ? '' : 's'}`;
+            }
+            showNextCard();
         }
-        showNextCard();
     }, 420);
 }
 
@@ -729,16 +1050,31 @@ function getMotivation(stars) {
 }
 
 function showFinished() {
-    const avgTime = state.correctTimes.length > 0
-        ? (state.correctTimes.reduce((a, b) => a + b, 0) / state.correctTimes.length).toFixed(2)
-        : '0.00';
+    const avgTimeNum = state.correctTimes.length > 0
+        ? state.correctTimes.reduce((a, b) => a + b, 0) / state.correctTimes.length
+        : 0;
+    const avgTime = avgTimeNum.toFixed(2);
     const totalTime = formatTotalTime(performance.now() - state.exerciseStartedAt);
     const stars = getStarRating();
     const motivation = getMotivation(stars);
+    const prResult = state.correctTimes.length > 0 ? checkPersonalRecord(avgTimeNum) : { isNew: false, prevPR: null };
 
     const starsHtml = [1, 2, 3].map(i =>
         `<span class="finish-star ${i <= stars ? 'star-earned' : 'star-empty'}" style="animation-delay:${i * 0.5}s">⭐</span>`
     ).join('');
+
+    const prClass = prResult.isNew ? ' has-pr' : '';
+    const prBadgeHtml = prResult.isNew ? '<span class="pr-badge stagger-in" style="animation-delay:1s">Nieuw PR!</span>' : '';
+
+    let prDeltaHtml = '';
+    if (prResult.prevPR !== null) {
+        const delta = avgTimeNum - prResult.prevPR;
+        const deltaAbs = Math.abs(delta).toFixed(2);
+        const isFaster = delta < 0;
+        const prefix = isFaster ? '-' : '+';
+        const deltaClass = isFaster ? 'pr-delta-faster' : 'pr-delta-slower';
+        prDeltaHtml = `<div class="pr-delta ${deltaClass} stagger-in" style="animation-delay:1.1s">${prefix}${deltaAbs}s</div>`;
+    }
 
     const exercise = document.getElementById('exercise');
     exercise.innerHTML = `
@@ -756,9 +1092,11 @@ function showFinished() {
                     <div class="stat-value">${state.wrongCount}</div>
                     <div class="stat-label">Fout</div>
                 </div>
-                <div class="stat-item stat-tijd stagger-in" style="animation-delay:0.9s">
+                <div class="stat-item stat-tijd${prClass} stagger-in" style="animation-delay:0.9s">
                     <div class="stat-value">${avgTime}s</div>
                     <div class="stat-label">Gem. per juist</div>
+                    ${prDeltaHtml}
+                    ${prBadgeHtml}
                 </div>
                 <div class="stat-item stat-totaal stagger-in" style="animation-delay:1.05s">
                     <div class="stat-value">${totalTime}</div>
@@ -900,17 +1238,20 @@ function confirmReset() {
 
 function attachEventListeners() {
     selectAllBtn.addEventListener('click', selectAll);
-    next1Btn.addEventListener('click', () => goToStep(2));
+    next1Btn.addEventListener('click', () => { playTapSound(); goToStep(2); });
     opsButtons.forEach(btn => btn.addEventListener('click', () => toggleOp(btn)));
     document.getElementById('select-all-ops').addEventListener('click', selectAllOps);
-    back2Btn.addEventListener('click', () => goToStep(1));
-    next2Btn.addEventListener('click', () => goToStep(3));
-    back3Btn.addEventListener('click', () => goToStep(2));
+    back2Btn.addEventListener('click', () => { playTapSound(); goToStep(1); });
+    next2Btn.addEventListener('click', () => { playTapSound(); goToStep(3); });
+    back3Btn.addEventListener('click', () => { playTapSound(); goToStep(2); });
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.addEventListener('click', () => selectMode(btn.dataset.mode));
     });
-    startBtn.addEventListener('click', () => goToStep('practice'));
-    document.getElementById('begin-btn').addEventListener('click', beginExercise);
+    document.querySelectorAll('.timer-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectTimer(Number(btn.dataset.timer)));
+    });
+    startBtn.addEventListener('click', () => { playTapSound(); goToStep('practice'); });
+    document.getElementById('begin-btn').addEventListener('click', () => { playTapSound(); beginExercise(); });
     document.getElementById('btn-fout').addEventListener('click', () => answerCard(false));
     document.getElementById('btn-juist').addEventListener('click', () => answerCard(true));
     document.addEventListener('click', (e) => {
@@ -929,6 +1270,27 @@ function attachEventListeners() {
         menuDropdown.style.display = 'none';
     });
     document.getElementById('menu-reset').addEventListener('click', confirmReset);
+
+    // Settings
+    const settingsOverlay = document.getElementById('settings-overlay');
+    updateSoundToggle();
+    updatePRDisplay();
+    document.getElementById('settings-btn').addEventListener('click', () => {
+        updatePRDisplay();
+        settingsOverlay.style.display = 'flex';
+    });
+    document.getElementById('sound-toggle').addEventListener('click', toggleSound);
+    document.getElementById('pr-reset').addEventListener('click', () => {
+        if (confirm('Wil je je persoonlijk record wissen?')) {
+            resetAllPersonalRecords();
+        }
+    });
+    document.getElementById('settings-close').addEventListener('click', () => {
+        settingsOverlay.style.display = 'none';
+    });
+    settingsOverlay.addEventListener('click', (e) => {
+        if (e.target === settingsOverlay) settingsOverlay.style.display = 'none';
+    });
 
     // Feedback
     const feedbackOverlay = document.getElementById('feedback-overlay');
