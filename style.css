@@ -777,6 +777,47 @@ header h1 {
     padding: 16px 0;
 }
 
+/* Level grid */
+.level-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
+}
+
+.level-btn {
+    --btn-color: #818cf8;
+    font-size: 1.2rem;
+    min-height: 72px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+/* Count-up-to grid (L1) */
+.upto-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+
+.upto-btn {
+    --btn-color: #818cf8;
+    font-size: 1.1rem;
+    min-height: 56px;
+    padding: 14px 0;
+}
+
+/* Level badge */
+.level-badge {
+    background: rgba(129, 140, 248, 0.2);
+    color: #a5b4fc;
+}
+
 /* Mode grid */
 .mode-grid {
     display: grid;

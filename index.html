@@ -6,19 +6,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0c0c14">
-    <meta property="og:title" content="Maaltafels L2">
-    <meta property="og:description" content="Oefen de maaltafels met flashcards — kies tafels, bewerkingen en speel in kind- of oudermodus.">
+    <meta property="og:title" content="Rekenflits">
+    <meta property="og:description" content="Oefen rekenen met flashcards — optellen, aftrekken, vermenigvuldigen en delen in kind- of oudermodus.">
     <meta property="og:image" content="https://maaltafels-five.vercel.app/icon-180.png">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://maaltafels-five.vercel.app">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Maaltafels L2">
-    <meta name="twitter:description" content="Oefen de maaltafels met flashcards — kies tafels, bewerkingen en speel in kind- of oudermodus.">
+    <meta name="twitter:title" content="Rekenflits">
+    <meta name="twitter:description" content="Oefen rekenen met flashcards — optellen, aftrekken, vermenigvuldigen en delen in kind- of oudermodus.">
     <meta name="twitter:image" content="https://maaltafels-five.vercel.app/icon-180.png">
     <link rel="apple-touch-icon" href="icon-180.png">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="manifest" href="manifest.json">
-    <title>Maaltafels L2</title>
+    <title>Rekenflits</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@
     <div id="app">
         <header>
             <button id="reset-btn" class="reset-btn" title="Opnieuw beginnen" disabled>&#8634;</button>
-            <h1>Maaltafels L2</h1>
+            <h1 id="app-title">Rekenflits</h1>
             <button id="settings-btn" class="settings-btn" title="Instellingen">&#9881;</button>
             <div class="menu-wrapper">
                 <button id="menu-btn" class="menu-btn" title="Menu">&#9776;</button>
@@ -49,8 +49,8 @@
                 <h2>Feedback</h2>
                 <form id="feedback-form" action="https://api.web3forms.com/submit" method="POST">
                     <input type="hidden" name="access_key" value="e2d5a936-6d4f-4bdd-8a96-bc841bd231fb">
-                    <input type="hidden" name="subject" value="Maaltafels L2 — Feedback">
-                    <input type="hidden" name="from_name" value="Maaltafels L2">
+                    <input type="hidden" name="subject" value="Rekenflits — Feedback">
+                    <input type="hidden" name="from_name" value="Rekenflits">
                     <input type="checkbox" name="botcheck" style="display:none;">
                     <textarea name="message" id="feedback-message" placeholder="Wat vind je goed? Wat kan beter?" rows="4" required></textarea>
                     <div class="feedback-actions">
@@ -68,10 +68,10 @@
         <!-- Info overlay -->
         <div id="info-overlay" class="feedback-overlay" style="display:none;">
             <div class="feedback-panel">
-                <h2>Over Maaltafels L2</h2>
+                <h2>Over Rekenflits</h2>
                 <div class="info-content">
-                    <p>Een oefenapp voor de maaltafels, gemaakt voor kinderen van het lager onderwijs.</p>
-                    <p>Kies welke tafels en bewerkingen je wil oefenen, hoeveel kaartjes je wil, en ga aan de slag!</p>
+                    <p>Een oefenapp voor rekenen, gemaakt voor kinderen van het lager onderwijs.</p>
+                    <p>Kies je leerjaar, bewerkingen en hoeveel kaartjes je wil, en ga aan de slag!</p>
                     <p><strong>Kind-modus:</strong> kies het juiste antwoord uit 4 opties.</p>
                     <p><strong>Ouder-modus:</strong> bekijk de vraag en duid zelf juist of fout aan.</p>
                     <p>Foute kaartjes komen terug tot je alles juist hebt.</p>
@@ -132,8 +132,23 @@
             </div>
         </div>
 
-        <!-- Stap 1: Kies tafels -->
-        <div id="step1" class="step active">
+        <!-- Stap 0: Kies leerjaar -->
+        <div id="step0" class="step active">
+            <h2>Wat wil je oefenen?</h2>
+            <div class="level-grid">
+                <button class="toggle-btn level-btn" data-level="L1">
+                    + &minus; Optellen &amp; Aftrekken
+                    <span class="mode-desc">Leerjaar 1</span>
+                </button>
+                <button class="toggle-btn level-btn" data-level="L2">
+                    &times; : Vermenigvuldigen &amp; Delen
+                    <span class="mode-desc">Leerjaar 2</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Stap 1: Kies tafels (L2) -->
+        <div id="step1" class="step">
             <h2>Welke tafels wil je oefenen?</h2>
             <div id="tafel-buttons" class="button-grid"></div>
             <button id="select-all" class="action-btn secondary">Alles selecteren</button>
@@ -151,13 +166,25 @@
             </div>
         </div>
 
+        <!-- Stap 1a: Tellen tot... (L1) -->
+        <div id="step1a" class="step">
+            <h2>Tellen tot hoeveel?</h2>
+            <div id="upto-buttons" class="upto-grid">
+                <button class="toggle-btn upto-btn" data-upto="3">Tot 3</button>
+                <button class="toggle-btn upto-btn" data-upto="5">Tot 5</button>
+                <button class="toggle-btn upto-btn" data-upto="7">Tot 7</button>
+                <button class="toggle-btn upto-btn" data-upto="10">Tot 10</button>
+            </div>
+            <div class="step-nav">
+                <button id="back1a" class="action-btn secondary">Terug</button>
+                <button id="next1a" class="action-btn primary" disabled>Volgende</button>
+            </div>
+        </div>
+
         <!-- Stap 2: Kies bewerkingen -->
         <div id="step2" class="step">
             <h2>Welke bewerkingen?</h2>
-            <div id="ops-buttons" class="ops-grid">
-                <button class="toggle-btn op-btn" data-op="multiplication">X (keer)</button>
-                <button class="toggle-btn op-btn" data-op="division">: (delen)</button>
-            </div>
+            <div id="ops-buttons" class="ops-grid"></div>
             <button id="select-all-ops" class="action-btn secondary">Alles selecteren</button>
             <div class="step-nav">
                 <button id="back2" class="action-btn secondary">Terug</button>
@@ -221,6 +248,7 @@
     </div>
 
     <script>
+        const L1_DATA = {"addition":[{"front":"0 + 0","back":"0"},{"front":"0 + 1","back":"1"},{"front":"0 + 2","back":"2"},{"front":"0 + 3","back":"3"},{"front":"0 + 4","back":"4"},{"front":"0 + 5","back":"5"},{"front":"0 + 6","back":"6"},{"front":"0 + 7","back":"7"},{"front":"0 + 8","back":"8"},{"front":"0 + 9","back":"9"},{"front":"0 + 10","back":"10"},{"front":"1 + 0","back":"1"},{"front":"1 + 1","back":"2"},{"front":"1 + 2","back":"3"},{"front":"1 + 3","back":"4"},{"front":"1 + 4","back":"5"},{"front":"1 + 5","back":"6"},{"front":"1 + 6","back":"7"},{"front":"1 + 7","back":"8"},{"front":"1 + 8","back":"9"},{"front":"1 + 9","back":"10"},{"front":"2 + 0","back":"2"},{"front":"2 + 1","back":"3"},{"front":"2 + 2","back":"4"},{"front":"2 + 3","back":"5"},{"front":"2 + 4","back":"6"},{"front":"2 + 5","back":"7"},{"front":"2 + 6","back":"8"},{"front":"2 + 7","back":"9"},{"front":"2 + 8","back":"10"},{"front":"3 + 0","back":"3"},{"front":"3 + 1","back":"4"},{"front":"3 + 2","back":"5"},{"front":"3 + 3","back":"6"},{"front":"3 + 4","back":"7"},{"front":"3 + 5","back":"8"},{"front":"3 + 6","back":"9"},{"front":"3 + 7","back":"10"},{"front":"4 + 0","back":"4"},{"front":"4 + 1","back":"5"},{"front":"4 + 2","back":"6"},{"front":"4 + 3","back":"7"},{"front":"4 + 4","back":"8"},{"front":"4 + 5","back":"9"},{"front":"4 + 6","back":"10"},{"front":"5 + 0","back":"5"},{"front":"5 + 1","back":"6"},{"front":"5 + 2","back":"7"},{"front":"5 + 3","back":"8"},{"front":"5 + 4","back":"9"},{"front":"5 + 5","back":"10"},{"front":"6 + 0","back":"6"},{"front":"6 + 1","back":"7"},{"front":"6 + 2","back":"8"},{"front":"6 + 3","back":"9"},{"front":"6 + 4","back":"10"},{"front":"7 + 0","back":"7"},{"front":"7 + 1","back":"8"},{"front":"7 + 2","back":"9"},{"front":"7 + 3","back":"10"},{"front":"8 + 0","back":"8"},{"front":"8 + 1","back":"9"},{"front":"8 + 2","back":"10"},{"front":"9 + 0","back":"9"},{"front":"9 + 1","back":"10"}],"subtraction":[{"front":"0 - 0","back":"0"},{"front":"1 - 0","back":"1"},{"front":"1 - 1","back":"0"},{"front":"2 - 0","back":"2"},{"front":"2 - 1","back":"1"},{"front":"2 - 2","back":"0"},{"front":"3 - 0","back":"3"},{"front":"3 - 1","back":"2"},{"front":"3 - 2","back":"1"},{"front":"3 - 3","back":"0"},{"front":"4 - 0","back":"4"},{"front":"4 - 1","back":"3"},{"front":"4 - 2","back":"2"},{"front":"4 - 3","back":"1"},{"front":"4 - 4","back":"0"},{"front":"5 - 0","back":"5"},{"front":"5 - 1","back":"4"},{"front":"5 - 2","back":"3"},{"front":"5 - 3","back":"2"},{"front":"5 - 4","back":"1"},{"front":"5 - 5","back":"0"},{"front":"6 - 0","back":"6"},{"front":"6 - 1","back":"5"},{"front":"6 - 2","back":"4"},{"front":"6 - 3","back":"3"},{"front":"6 - 4","back":"2"},{"front":"6 - 5","back":"1"},{"front":"6 - 6","back":"0"},{"front":"7 - 0","back":"7"},{"front":"7 - 1","back":"6"},{"front":"7 - 2","back":"5"},{"front":"7 - 3","back":"4"},{"front":"7 - 4","back":"3"},{"front":"7 - 5","back":"2"},{"front":"7 - 6","back":"1"},{"front":"7 - 7","back":"0"},{"front":"8 - 0","back":"8"},{"front":"8 - 1","back":"7"},{"front":"8 - 2","back":"6"},{"front":"8 - 3","back":"5"},{"front":"8 - 4","back":"4"},{"front":"8 - 5","back":"3"},{"front":"8 - 6","back":"2"},{"front":"8 - 7","back":"1"},{"front":"8 - 8","back":"0"},{"front":"9 - 0","back":"9"},{"front":"9 - 1","back":"8"},{"front":"9 - 2","back":"7"},{"front":"9 - 3","back":"6"},{"front":"9 - 4","back":"5"},{"front":"9 - 5","back":"4"},{"front":"9 - 6","back":"3"},{"front":"9 - 7","back":"2"},{"front":"9 - 8","back":"1"},{"front":"9 - 9","back":"0"}]};
         const MAALTAFELS_DATA = {"1":{"enabled":true,"color":"#ffb87a","multiplication":[{"front":"0 X 1 =","back":"0"},{"front":"1 X 1 =","back":"1"},{"front":"2 X 1 =","back":"2"},{"front":"3 X 1 =","back":"3"},{"front":"4 X 1 =","back":"4"},{"front":"5 X 1 =","back":"5"},{"front":"6 X 1 =","back":"6"},{"front":"7 X 1 =","back":"7"},{"front":"8 X 1 =","back":"8"},{"front":"9 X 1 =","back":"9"},{"front":"10 X 1 =","back":"10"}],"division":[{"front":"0 : 1 =","back":"0"},{"front":"1 : 1 =","back":"1"},{"front":"2 : 1 =","back":"2"},{"front":"3 : 1 =","back":"3"},{"front":"4 : 1 =","back":"4"},{"front":"5 : 1 =","back":"5"},{"front":"6 : 1 =","back":"6"},{"front":"7 : 1 =","back":"7"},{"front":"8 : 1 =","back":"8"},{"front":"9 : 1 =","back":"9"},{"front":"10 : 1 =","back":"10"}]},"2":{"enabled":true,"color":"#ff6b1a","multiplication":[{"front":"0 X 2 =","back":"0"},{"front":"1 X 2 =","back":"2"},{"front":"2 X 2 =","back":"4"},{"front":"3 X 2 =","back":"6"},{"front":"4 X 2 =","back":"8"},{"front":"5 X 2 =","back":"10"},{"front":"6 X 2 =","back":"12"},{"front":"7 X 2 =","back":"14"},{"front":"8 X 2 =","back":"16"},{"front":"9 X 2 =","back":"18"},{"front":"10 X 2 =","back":"20"}],"division":[{"front":"0 : 2 =","back":"0"},{"front":"2 : 2 =","back":"1"},{"front":"4 : 2 =","back":"2"},{"front":"6 : 2 =","back":"3"},{"front":"8 : 2 =","back":"4"},{"front":"10 : 2 =","back":"5"},{"front":"12 : 2 =","back":"6"},{"front":"14 : 2 =","back":"7"},{"front":"16 : 2 =","back":"8"},{"front":"18 : 2 =","back":"9"},{"front":"20 : 2 =","back":"10"}]},"3":{"enabled":true,"color":"#9b59b6","multiplication":[{"front":"0 X 3 =","back":"0"},{"front":"1 X 3 =","back":"3"},{"front":"2 X 3 =","back":"6"},{"front":"3 X 3 =","back":"9"},{"front":"4 X 3 =","back":"12"},{"front":"5 X 3 =","back":"15"},{"front":"6 X 3 =","back":"18"},{"front":"7 X 3 =","back":"21"},{"front":"8 X 3 =","back":"24"},{"front":"9 X 3 =","back":"27"},{"front":"10 X 3 =","back":"30"}],"division":[{"front":"0 : 3 =","back":"0"},{"front":"3 : 3 =","back":"1"},{"front":"6 : 3 =","back":"2"},{"front":"9 : 3 =","back":"3"},{"front":"12 : 3 =","back":"4"},{"front":"15 : 3 =","back":"5"},{"front":"18 : 3 =","back":"6"},{"front":"21 : 3 =","back":"7"},{"front":"24 : 3 =","back":"8"},{"front":"27 : 3 =","back":"9"},{"front":"30 : 3 =","back":"10"}]},"4":{"enabled":true,"color":"#fff07a","multiplication":[{"front":"0 X 4 =","back":"0"},{"front":"1 X 4 =","back":"4"},{"front":"2 X 4 =","back":"8"},{"front":"3 X 4 =","back":"12"},{"front":"4 X 4 =","back":"16"},{"front":"5 X 4 =","back":"20"},{"front":"6 X 4 =","back":"24"},{"front":"7 X 4 =","back":"28"},{"front":"8 X 4 =","back":"32"},{"front":"9 X 4 =","back":"36"},{"front":"10 X 4 =","back":"40"}],"division":[{"front":"0 : 4 =","back":"0"},{"front":"4 : 4 =","back":"1"},{"front":"8 : 4 =","back":"2"},{"front":"12 : 4 =","back":"3"},{"front":"16 : 4 =","back":"4"},{"front":"20 : 4 =","back":"5"},{"front":"24 : 4 =","back":"6"},{"front":"28 : 4 =","back":"7"},{"front":"32 : 4 =","back":"8"},{"front":"36 : 4 =","back":"9"},{"front":"40 : 4 =","back":"10"}]},"5":{"enabled":true,"color":"#ffb3d9","multiplication":[{"front":"0 X 5 =","back":"0"},{"front":"1 X 5 =","back":"5"},{"front":"2 X 5 =","back":"10"},{"front":"3 X 5 =","back":"15"},{"front":"4 X 5 =","back":"20"},{"front":"5 X 5 =","back":"25"},{"front":"6 X 5 =","back":"30"},{"front":"7 X 5 =","back":"35"},{"front":"8 X 5 =","back":"40"},{"front":"9 X 5 =","back":"45"},{"front":"10 X 5 =","back":"50"}],"division":[{"front":"0 : 5 =","back":"0"},{"front":"5 : 5 =","back":"1"},{"front":"10 : 5 =","back":"2"},{"front":"15 : 5 =","back":"3"},{"front":"20 : 5 =","back":"4"},{"front":"25 : 5 =","back":"5"},{"front":"30 : 5 =","back":"6"},{"front":"35 : 5 =","back":"7"},{"front":"40 : 5 =","back":"8"},{"front":"45 : 5 =","back":"9"},{"front":"50 : 5 =","back":"10"}]},"6":{"enabled":true,"color":"#ff4da6","multiplication":[{"front":"0 X 6 =","back":"0"},{"front":"1 X 6 =","back":"6"},{"front":"2 X 6 =","back":"12"},{"front":"3 X 6 =","back":"18"},{"front":"4 X 6 =","back":"24"},{"front":"5 X 6 =","back":"30"},{"front":"6 X 6 =","back":"36"},{"front":"7 X 6 =","back":"42"},{"front":"8 X 6 =","back":"48"},{"front":"9 X 6 =","back":"54"},{"front":"10 X 6 =","back":"60"}],"division":[{"front":"0 : 6 =","back":"0"},{"front":"6 : 6 =","back":"1"},{"front":"12 : 6 =","back":"2"},{"front":"18 : 6 =","back":"3"},{"front":"24 : 6 =","back":"4"},{"front":"30 : 6 =","back":"5"},{"front":"36 : 6 =","back":"6"},{"front":"42 : 6 =","back":"7"},{"front":"48 : 6 =","back":"8"},{"front":"54 : 6 =","back":"9"},{"front":"60 : 6 =","back":"10"}]},"7":{"enabled":true,"color":"#5ce65c","multiplication":[{"front":"0 X 7 =","back":"0"},{"front":"1 X 7 =","back":"7"},{"front":"2 X 7 =","back":"14"},{"front":"3 X 7 =","back":"21"},{"front":"4 X 7 =","back":"28"},{"front":"5 X 7 =","back":"35"},{"front":"6 X 7 =","back":"42"},{"front":"7 X 7 =","back":"49"},{"front":"8 X 7 =","back":"56"},{"front":"9 X 7 =","back":"63"},{"front":"10 X 7 =","back":"70"}],"division":[{"front":"0 : 7 =","back":"0"},{"front":"7 : 7 =","back":"1"},{"front":"14 : 7 =","back":"2"},{"front":"21 : 7 =","back":"3"},{"front":"28 : 7 =","back":"4"},{"front":"35 : 7 =","back":"5"},{"front":"42 : 7 =","back":"6"},{"front":"49 : 7 =","back":"7"},{"front":"56 : 7 =","back":"8"},{"front":"63 : 7 =","back":"9"},{"front":"70 : 7 =","back":"10"}]},"8":{"enabled":true,"color":"#e6e6e6","multiplication":[{"front":"0 X 8 =","back":"0"},{"front":"1 X 8 =","back":"8"},{"front":"2 X 8 =","back":"16"},{"front":"3 X 8 =","back":"24"},{"front":"4 X 8 =","back":"32"},{"front":"5 X 8 =","back":"40"},{"front":"6 X 8 =","back":"48"},{"front":"7 X 8 =","back":"56"},{"front":"8 X 8 =","back":"64"},{"front":"9 X 8 =","back":"72"},{"front":"10 X 8 =","back":"80"}],"division":[{"front":"0 : 8 =","back":"0"},{"front":"8 : 8 =","back":"1"},{"front":"16 : 8 =","back":"2"},{"front":"24 : 8 =","back":"3"},{"front":"32 : 8 =","back":"4"},{"front":"40 : 8 =","back":"5"},{"front":"48 : 8 =","back":"6"},{"front":"56 : 8 =","back":"7"},{"front":"64 : 8 =","back":"8"},{"front":"72 : 8 =","back":"9"},{"front":"80 : 8 =","back":"10"}]},"9":{"enabled":true,"color":"#f54242","multiplication":[{"front":"0 X 9 =","back":"0"},{"front":"1 X 9 =","back":"9"},{"front":"2 X 9 =","back":"18"},{"front":"3 X 9 =","back":"27"},{"front":"4 X 9 =","back":"36"},{"front":"5 X 9 =","back":"45"},{"front":"6 X 9 =","back":"54"},{"front":"7 X 9 =","back":"63"},{"front":"8 X 9 =","back":"72"},{"front":"9 X 9 =","back":"81"},{"front":"10 X 9 =","back":"90"}],"division":[{"front":"0 : 9 =","back":"0"},{"front":"9 : 9 =","back":"1"},{"front":"18 : 9 =","back":"2"},{"front":"27 : 9 =","back":"3"},{"front":"36 : 9 =","back":"4"},{"front":"45 : 9 =","back":"5"},{"front":"54 : 9 =","back":"6"},{"front":"63 : 9 =","back":"7"},{"front":"72 : 9 =","back":"8"},{"front":"81 : 9 =","back":"9"},{"front":"90 : 9 =","back":"10"}]},"10":{"enabled":true,"color":"#85c4ff","multiplication":[{"front":"0 X 10 =","back":"0"},{"front":"1 X 10 =","back":"10"},{"front":"2 X 10 =","back":"20"},{"front":"3 X 10 =","back":"30"},{"front":"4 X 10 =","back":"40"},{"front":"5 X 10 =","back":"50"},{"front":"6 X 10 =","back":"60"},{"front":"7 X 10 =","back":"70"},{"front":"8 X 10 =","back":"80"},{"front":"9 X 10 =","back":"90"},{"front":"10 X 10 =","back":"100"}],"division":[{"front":"0 : 10 =","back":"0"},{"front":"10 : 10 =","back":"1"},{"front":"20 : 10 =","back":"2"},{"front":"30 : 10 =","back":"3"},{"front":"40 : 10 =","back":"4"},{"front":"50 : 10 =","back":"5"},{"front":"60 : 10 =","back":"6"},{"front":"70 : 10 =","back":"7"},{"front":"80 : 10 =","back":"8"},{"front":"90 : 10 =","back":"9"},{"front":"100 : 10 =","back":"10"}]}};
     </script>
     <script defer src="/_vercel/insights/script.js"></script>
