@@ -484,6 +484,7 @@ function selectLevel(level) {
     playTapSound();
     updateLevelButtons();
     renderOpsButtons();
+    updateOptiesinfo();
     if (level === 'L1') {
         goToStep('1a');
     } else {
