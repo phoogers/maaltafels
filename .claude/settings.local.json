@@ -14,7 +14,9 @@
       "Bash(gh api:*)",
       "Bash(git config:*)",
       "Bash(npx --yes svgexport icon.svg icon-180.png 180:180)",
-      "Bash(npx svgexport:*)"
+      "Bash(npx svgexport:*)",
+      "Bash(git checkout:*)",
+      "Bash(persoonlijke records wil wissen?\":*)"
     ]
   }
 }

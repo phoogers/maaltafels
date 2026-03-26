@@ -1,0 +1,2 @@
+- [user_profile.md](user_profile.md) - Parent of ~8yo building maaltafels flashcard app; target users are children aged 8-10
+- [project_state.md](project_state.md) - Current state of app features and easter egg candidates
