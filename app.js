@@ -1,10 +1,13 @@
 const state = {
     data: null,
+    l1data: null,
+    level: null,       // 'L1' or 'L2'
+    countUpTo: null,   // L1 only: 3, 5, 7, or 10
     selectedTables: [],
     selectedOps: [],
     cardCount: null,
     mode: 'kind',
-    currentStep: 1,
+    currentStep: 0,
     cards: [],
     deck: [],
     foutPile: [],
@@ -28,7 +31,6 @@ const optiesInfoTimer = document.querySelector('#info-timer span');
 const tafelButtonsContainer = document.getElementById('tafel-buttons');
 const selectAllBtn = document.getElementById('select-all');
 const next1Btn = document.getElementById('next1');
-const opsButtons = document.querySelectorAll('.op-btn');
 const back2Btn = document.getElementById('back2');
 const next2Btn = document.getElementById('next2');
 const countButtonsContainer = document.getElementById('count-buttons');
@@ -56,7 +58,42 @@ function toggleSound() {
     if (soundEnabled && audioCtx.state === 'suspended') audioCtx.resume();
 }
 
+// --- Level & operation config ---
+
+const L1_OPS = [
+    { key: 'addition', label: '+ (optellen)' },
+    { key: 'subtraction', label: '- (aftrekken)' },
+];
+const L2_OPS = [
+    { key: 'multiplication', label: 'X (keer)' },
+    { key: 'division', label: ': (delen)' },
+];
+const ALL_OPS_DISPLAY = {
+    addition: '+', subtraction: '-',
+    multiplication: 'X', division: ':',
+};
+const L1_COLORS = { addition: '#4ade80', subtraction: '#f472b6' };
+
+function getOpsForLevel() {
+    return state.level === 'L1' ? L1_OPS : L2_OPS;
+}
+
+function getCardColor(card) {
+    if (card.table) return state.data[card.table].color;
+    return L1_COLORS[card.op] || '#888';
+}
+
+function getL1CardsForOp(op) {
+    return state.l1data[op].filter(c => Number(c.back) <= state.countUpTo);
+}
+
+// --- Personal records ---
+
 function getPRKey() {
+    if (state.level === 'L1') {
+        const ops = [...state.selectedOps].sort().join(',');
+        return `pr_L1_tot${state.countUpTo}_${ops}_${state.mode}`;
+    }
     const tables = [...state.selectedTables].sort((a, b) => Number(a) - Number(b)).join(',');
     const ops = [...state.selectedOps].sort().join(',');
     return `pr_${tables}_${ops}_${state.mode}`;
@@ -87,12 +124,20 @@ function resetAllPersonalRecords() {
 }
 
 function parsePRKey(key) {
+    if (key.startsWith('pr_L1_')) {
+        // pr_L1_tot7_addition,subtraction_kind
+        const parts = key.split('_');
+        const countUpTo = Number(parts[2].replace('tot', ''));
+        const ops = parts[3].split(',');
+        const mode = parts[4] || 'kind';
+        return { level: 'L1', countUpTo, ops, mode, tables: [] };
+    }
     // pr_1,2,3_multiplication,division_kind
     const parts = key.split('_');
     const tables = parts[1].split(',');
     const ops = parts[2].split(',');
     const mode = parts[3] || 'kind';
-    return { tables, ops, mode };
+    return { level: 'L2', tables, ops, mode, countUpTo: null };
 }
 
 function updatePRDisplay() {
@@ -108,7 +153,6 @@ function updatePRDisplay() {
 
     prReset.disabled = false;
     const allTables = Object.keys(state.data).sort((a, b) => Number(a) - Number(b));
-    const allOps = [['multiplication', 'X'], ['division', ':']];
 
     // Sort by best time
     const entries = prKeys.map(key => ({
@@ -116,40 +160,53 @@ function updatePRDisplay() {
         time: Number(localStorage.getItem(key)),
         ...parsePRKey(key),
     })).sort((a, b) => {
+        if (a.level !== b.level) return a.level === 'L1' ? -1 : 1;
         if (a.mode !== b.mode) return a.mode === 'kind' ? -1 : 1;
         return a.time - b.time;
     });
 
     prList.innerHTML = entries.map(entry => {
-        const firstRow = allTables.slice(0, 5).map(t => {
-            const active = entry.tables.includes(t);
-            return `<span class="tafel-badge${active ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color};width:18px;height:18px;font-size:0.55rem;">${t}</span>`;
-        }).join('');
-
-        const multActive = entry.ops.includes('multiplication');
-        const firstRowOp = `<span class="op-badge${multActive ? '' : ' badge-dim'}" style="width:18px;height:18px;font-size:0.55rem;">X</span>`;
-
-        const secondRow = allTables.slice(5).map(t => {
-            const active = entry.tables.includes(t);
-            return `<span class="tafel-badge${active ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color};width:18px;height:18px;font-size:0.55rem;">${t}</span>`;
-        }).join('');
-
-        const divActive = entry.ops.includes('division');
-        const secondRowOp = `<span class="op-badge${divActive ? '' : ' badge-dim'}" style="width:18px;height:18px;font-size:0.55rem;">:</span>`;
-
         const modeLabel = entry.mode === 'kind' ? 'Kind' : 'Ouder';
         const modeBadge = `<span class="info-badge mode-badge" style="height:18px;font-size:0.55rem;padding:0 6px;">${modeLabel}</span>`;
+
+        let badgesHtml;
+        if (entry.level === 'L1') {
+            const levelBadge = `<span class="info-badge level-badge" style="height:18px;font-size:0.55rem;padding:0 6px;">L1</span>`;
+            const uptoBadge = `<span class="info-badge count-badge" style="height:18px;font-size:0.55rem;padding:0 6px;">Tot ${entry.countUpTo}</span>`;
+            const opsBadges = entry.ops.map(op =>
+                `<span class="op-badge" style="width:18px;height:18px;font-size:0.55rem;">${ALL_OPS_DISPLAY[op] || op}</span>`
+            ).join('');
+            badgesHtml = `
+                <div class="pr-entry-badges">${levelBadge}${uptoBadge}${opsBadges}${modeBadge}</div>
+            `;
+        } else {
+            const firstRow = allTables.slice(0, 5).map(t => {
+                const active = entry.tables.includes(t);
+                return `<span class="tafel-badge${active ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color};width:18px;height:18px;font-size:0.55rem;">${t}</span>`;
+            }).join('');
+            const multActive = entry.ops.includes('multiplication');
+            const firstRowOp = `<span class="op-badge${multActive ? '' : ' badge-dim'}" style="width:18px;height:18px;font-size:0.55rem;">X</span>`;
+            const secondRow = allTables.slice(5).map(t => {
+                const active = entry.tables.includes(t);
+                return `<span class="tafel-badge${active ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color};width:18px;height:18px;font-size:0.55rem;">${t}</span>`;
+            }).join('');
+            const divActive = entry.ops.includes('division');
+            const secondRowOp = `<span class="op-badge${divActive ? '' : ' badge-dim'}" style="width:18px;height:18px;font-size:0.55rem;">:</span>`;
+            badgesHtml = `
+                <div class="pr-entry-badges">${firstRow}${firstRowOp}</div>
+                <div class="pr-entry-badges">${secondRow}${secondRowOp}${modeBadge}</div>
+            `;
+        }
 
         return `<div class="pr-entry">
             <div class="pr-entry-top">
                 <div class="pr-entry-options">
-                    <div class="pr-entry-badges">${firstRow}${firstRowOp}</div>
-                    <div class="pr-entry-badges">${secondRow}${secondRowOp}${modeBadge}</div>
+                    ${badgesHtml}
                 </div>
                 <div class="pr-entry-value">${entry.time.toFixed(2)}s</div>
                 <button class="pr-entry-delete" data-key="${entry.key}" title="Wissen">&times;</button>
             </div>
-            <button class="pr-entry-challenge" data-tables="${entry.tables.join(',')}" data-ops="${entry.ops.join(',')}" data-mode="${entry.mode}">Probeer te verbeteren!</button>
+            <button class="pr-entry-challenge" data-level="${entry.level}" data-upto="${entry.countUpTo || ''}" data-tables="${entry.tables.join(',')}" data-ops="${entry.ops.join(',')}" data-mode="${entry.mode}">Probeer te verbeteren!</button>
         </div>`;
     }).join('');
 
@@ -164,19 +221,23 @@ function updatePRDisplay() {
 
     prList.querySelectorAll('.pr-entry-challenge').forEach(btn => {
         btn.addEventListener('click', () => {
-            const tables = btn.dataset.tables.split(',');
+            const level = btn.dataset.level || 'L2';
+            const tables = btn.dataset.tables ? btn.dataset.tables.split(',').filter(Boolean) : [];
             const ops = btn.dataset.ops.split(',');
             const mode = btn.dataset.mode;
-            challengePR(tables, ops, mode);
+            const countUpTo = btn.dataset.upto ? Number(btn.dataset.upto) : null;
+            challengePR(level, tables, ops, mode, countUpTo);
         });
     });
 }
 
-function challengePR(tables, ops, mode) {
+function challengePR(level, tables, ops, mode, countUpTo) {
     // Close records overlay
     document.getElementById('records-overlay').style.display = 'none';
 
     // Reset state
+    state.level = level;
+    state.countUpTo = countUpTo;
     state.selectedTables = [];
     state.selectedOps = [];
     state.cardCount = null;
@@ -194,7 +255,7 @@ function challengePR(tables, ops, mode) {
     state.timeLimit = 0;
     clearTimerBar();
 
-    // Set tables and ops from the PR entry
+    // Set selections from the PR entry
     state.selectedTables = [...tables];
     state.selectedOps = [...ops];
     state.mode = mode;
@@ -203,11 +264,17 @@ function challengePR(tables, ops, mode) {
     updateTafelButtonStates();
     updateSelectAllLabel();
     validateStep1();
-    opsButtons.forEach(b => {
+    renderOpsButtons();
+    document.querySelectorAll('.op-btn').forEach(b => {
         b.classList.toggle('active', state.selectedOps.includes(b.dataset.op));
     });
     updateSelectAllOpsLabel();
     validateStep2();
+    if (level === 'L1') {
+        document.querySelectorAll('.upto-btn').forEach(btn => {
+            btn.classList.toggle('active', Number(btn.dataset.upto) === countUpTo);
+        });
+    }
     document.querySelectorAll('.count-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === mode);
@@ -215,6 +282,7 @@ function challengePR(tables, ops, mode) {
     document.querySelectorAll('.timer-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.timer === '0');
     });
+    updateLevelButtons();
 
     updateOptiesinfo();
     goToStep(3);
@@ -328,6 +396,7 @@ function playWrongSound() {
 
 // Load data and init
 state.data = MAALTAFELS_DATA;
+state.l1data = L1_DATA;
 init();
 
 function init() {
@@ -408,7 +477,59 @@ function validateStep1() {
     next1Btn.disabled = state.selectedTables.length === 0;
 }
 
+// --- Step 0: Level selection ---
+
+function selectLevel(level) {
+    state.level = level;
+    playTapSound();
+    updateLevelButtons();
+    renderOpsButtons();
+    updateOptiesinfo();
+    if (level === 'L1') {
+        goToStep('1a');
+    } else {
+        goToStep(1);
+    }
+}
+
+function updateLevelButtons() {
+    document.querySelectorAll('.level-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.level === state.level);
+    });
+}
+
+// --- Step 1a: Count-up-to selection (L1) ---
+
+function selectCountUpTo(n) {
+    const wasSelected = state.countUpTo === n;
+    state.countUpTo = wasSelected ? null : n;
+    wasSelected ? playDeselectSound() : playSelectSound();
+    document.querySelectorAll('.upto-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.upto) === state.countUpTo);
+    });
+    validateStep1a();
+    updateOptiesinfo();
+}
+
+function validateStep1a() {
+    document.getElementById('next1a').disabled = state.countUpTo === null;
+}
+
 // --- Step 2: Operations ---
+
+function renderOpsButtons() {
+    const opsContainer = document.getElementById('ops-buttons');
+    opsContainer.innerHTML = '';
+    const ops = getOpsForLevel();
+    for (const op of ops) {
+        const btn = document.createElement('button');
+        btn.className = 'toggle-btn op-btn';
+        btn.dataset.op = op.key;
+        btn.textContent = op.label;
+        btn.addEventListener('click', () => toggleOp(btn));
+        opsContainer.appendChild(btn);
+    }
+}
 
 function toggleOp(opBtn) {
     const op = opBtn.dataset.op;
@@ -420,7 +541,7 @@ function toggleOp(opBtn) {
         state.selectedOps.splice(idx, 1);
         playDeselectSound();
     }
-    opsButtons.forEach(b => {
+    document.querySelectorAll('.op-btn').forEach(b => {
         b.classList.toggle('active', state.selectedOps.includes(b.dataset.op));
     });
     updateSelectAllOpsLabel();
@@ -429,11 +550,11 @@ function toggleOp(opBtn) {
 }
 
 function selectAllOps() {
-    const allOps = ['multiplication', 'division'];
+    const allOps = getOpsForLevel().map(o => o.key);
     const allSelected = allOps.every(op => state.selectedOps.includes(op));
     state.selectedOps = allSelected ? [] : [...allOps];
     allSelected ? playDeselectSound() : playSelectSound();
-    opsButtons.forEach(b => {
+    document.querySelectorAll('.op-btn').forEach(b => {
         b.classList.toggle('active', state.selectedOps.includes(b.dataset.op));
     });
     updateSelectAllOpsLabel();
@@ -443,7 +564,8 @@ function selectAllOps() {
 
 function updateSelectAllOpsLabel() {
     const btn = document.getElementById('select-all-ops');
-    const allSelected = ['multiplication', 'division'].every(op => state.selectedOps.includes(op));
+    const allOps = getOpsForLevel().map(o => o.key);
+    const allSelected = allOps.every(op => state.selectedOps.includes(op));
     btn.textContent = allSelected ? 'Alles deselecteren' : 'Alles selecteren';
 }
 
@@ -454,6 +576,14 @@ function validateStep2() {
 // --- Step 3: Card count ---
 
 function getAvailableCardCount() {
+    if (state.level === 'L1') {
+        if (!state.countUpTo) return 0;
+        let count = 0;
+        for (const op of state.selectedOps) {
+            count += getL1CardsForOp(op).length;
+        }
+        return count;
+    }
     return state.selectedTables.length * state.selectedOps.length * 11;
 }
 
@@ -535,7 +665,8 @@ function validateStep3() {
 // --- Optiesinfo ---
 
 function updateResetBtn() {
-    const hasSelections = state.selectedTables.length > 0 ||
+    const hasSelections = state.level !== null ||
+        state.selectedTables.length > 0 ||
         state.selectedOps.length > 0 ||
         state.cardCount !== null;
     resetBtn.disabled = !hasSelections;
@@ -543,19 +674,36 @@ function updateResetBtn() {
 }
 
 function updateOptiesinfo() {
-    // Tafels — always show all, dim unselected
-    const allTables = Object.keys(state.data).sort((a, b) => Number(a) - Number(b));
-    optiesInfoTafels.innerHTML = allTables.map(t => {
-        const selected = state.selectedTables.includes(t);
-        return `<span class="tafel-badge${selected ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color}">${t}</span>`;
-    }).join('');
-
-    // Bewerkingen — always show both, dim unselected
-    const allOps = [['multiplication', 'X'], ['division', ':']];
-    optiesInfoOps.innerHTML = allOps.map(([op, label]) => {
-        const selected = state.selectedOps.includes(op);
-        return `<span class="op-badge${selected ? '' : ' badge-dim'}">${label}</span>`;
-    }).join('');
+    if (state.level === 'L1') {
+        // L1: show "Tot X" badge instead of table badges
+        if (state.countUpTo) {
+            optiesInfoTafels.innerHTML = `<span class="info-badge level-badge">L1</span> <span class="info-badge count-badge">Tot ${state.countUpTo}</span>`;
+        } else {
+            optiesInfoTafels.innerHTML = `<span class="info-badge level-badge">L1</span> <span class="info-badge count-badge badge-dim">-</span>`;
+        }
+        // L1 ops
+        const allOps = L1_OPS.map(o => [o.key, ALL_OPS_DISPLAY[o.key]]);
+        optiesInfoOps.innerHTML = allOps.map(([op, label]) => {
+            const selected = state.selectedOps.includes(op);
+            return `<span class="op-badge${selected ? '' : ' badge-dim'}">${label}</span>`;
+        }).join('');
+    } else if (state.level === 'L2') {
+        // L2: existing table badges
+        const allTables = Object.keys(state.data).sort((a, b) => Number(a) - Number(b));
+        optiesInfoTafels.innerHTML = allTables.map(t => {
+            const selected = state.selectedTables.includes(t);
+            return `<span class="tafel-badge${selected ? '' : ' badge-dim'}" style="--badge-color:${state.data[t].color}">${t}</span>`;
+        }).join('');
+        const allOps = L2_OPS.map(o => [o.key, ALL_OPS_DISPLAY[o.key]]);
+        optiesInfoOps.innerHTML = allOps.map(([op, label]) => {
+            const selected = state.selectedOps.includes(op);
+            return `<span class="op-badge${selected ? '' : ' badge-dim'}">${label}</span>`;
+        }).join('');
+    } else {
+        // No level selected yet
+        optiesInfoTafels.innerHTML = `<span class="info-badge badge-dim">-</span>`;
+        optiesInfoOps.innerHTML = `<span class="op-badge badge-dim">-</span>`;
+    }
 
     // Kaartjes
     const available = getAvailableCardCount();
@@ -582,7 +730,9 @@ function goToStep(step) {
     state.currentStep = step;
     document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
 
+    if (step === 0) document.getElementById('step0').classList.add('active');
     if (step === 1) document.getElementById('step1').classList.add('active');
+    if (step === '1a') document.getElementById('step1a').classList.add('active');
     if (step === 2) document.getElementById('step2').classList.add('active');
     if (step === 3) {
         autoSelectCount();
@@ -600,11 +750,13 @@ function goToStep(step) {
 }
 
 function resetState() {
+    state.level = null;
+    state.countUpTo = null;
     state.selectedTables = [];
     state.selectedOps = [];
     state.cardCount = null;
     state.mode = 'kind';
-    state.currentStep = 1;
+    state.currentStep = 0;
     state.cards = [];
     state.deck = [];
     state.foutPile = [];
@@ -618,11 +770,14 @@ function resetState() {
     state.timeLimit = 0;
     clearTimerBar();
 
+    updateLevelButtons();
     updateTafelButtonStates();
     updateSelectAllLabel();
     validateStep1();
+    document.querySelectorAll('.upto-btn').forEach(btn => btn.classList.remove('active'));
 
-    opsButtons.forEach(b => b.classList.remove('active'));
+    renderOpsButtons();
+    document.querySelectorAll('.op-btn').forEach(b => b.classList.remove('active'));
     updateSelectAllOpsLabel();
     validateStep2();
 
@@ -656,7 +811,7 @@ function resetState() {
     document.getElementById('btn-juist').addEventListener('click', () => answerCard(true));
 
     updateOptiesinfo();
-    goToStep(1);
+    goToStep(0);
 }
 
 // --- Practice ---
@@ -671,10 +826,18 @@ function shuffle(arr) {
 
 function buildDeck() {
     const cards = [];
-    for (const t of state.selectedTables) {
+    if (state.level === 'L1') {
         for (const op of state.selectedOps) {
-            for (const card of state.data[t][op]) {
-                cards.push({ ...card, table: t, op });
+            for (const card of getL1CardsForOp(op)) {
+                cards.push({ ...card, table: null, op });
+            }
+        }
+    } else {
+        for (const t of state.selectedTables) {
+            for (const op of state.selectedOps) {
+                for (const card of state.data[t][op]) {
+                    cards.push({ ...card, table: t, op });
+                }
             }
         }
     }
@@ -717,7 +880,7 @@ function startPractice() {
         const el = document.createElement('div');
         el.className = 'card';
         el.textContent = card.front;
-        el.style.background = state.data[card.table].color;
+        el.style.background = getCardColor(card);
 
         // Target position in a scattered grid
         const col = i % cols;
@@ -846,20 +1009,37 @@ function generateMCOptions(card) {
     const correctAnswer = card.back;
     const correctNum = Number(correctAnswer);
 
-    // Collect all possible answers from the same table + operation
-    const tableData = state.data[card.table][card.op];
-    let pool = tableData.map(c => Number(c.back)).filter(n => n !== correctNum && (correctNum === 0 || n !== 0));
+    let pool;
+    if (state.level === 'L1') {
+        // L1: pool from same operation, filtered by countUpTo
+        pool = getL1CardsForOp(card.op)
+            .map(c => Number(c.back))
+            .filter(n => n !== correctNum && (correctNum === 0 || n !== 0));
 
-    // If not enough distractors from same table, add from other selected tables
-    if (pool.length < 3) {
-        for (const t of state.selectedTables) {
-            if (t === card.table) continue;
+        // If not enough, add from the other L1 op
+        if (pool.length < 3) {
             for (const op of state.selectedOps) {
-                const extras = state.data[t][op].map(c => Number(c.back)).filter(n => correctNum === 0 || n !== 0);
+                if (op === card.op) continue;
+                const extras = getL1CardsForOp(op).map(c => Number(c.back)).filter(n => correctNum === 0 || n !== 0);
                 pool.push(...extras);
             }
+            pool = pool.filter(n => n !== correctNum);
         }
-        pool = pool.filter(n => n !== correctNum);
+    } else {
+        // L2: existing logic
+        const tableData = state.data[card.table][card.op];
+        pool = tableData.map(c => Number(c.back)).filter(n => n !== correctNum && (correctNum === 0 || n !== 0));
+
+        if (pool.length < 3) {
+            for (const t of state.selectedTables) {
+                if (t === card.table) continue;
+                for (const op of state.selectedOps) {
+                    const extras = state.data[t][op].map(c => Number(c.back)).filter(n => correctNum === 0 || n !== 0);
+                    pool.push(...extras);
+                }
+            }
+            pool = pool.filter(n => n !== correctNum);
+        }
     }
 
     // Deduplicate
@@ -981,7 +1161,7 @@ function showNextCard() {
         progress.textContent = `Ronde ${state.round} — nog ${remaining} kaartje${remaining === 1 ? '' : 's'}`;
     }
 
-    const bg = state.data[state.currentCard.table].color;
+    const bg = getCardColor(state.currentCard);
 
     // Build card with front and back faces
     activeCardEl.style.transition = 'none';
@@ -1112,7 +1292,7 @@ function renderPile(pileId, cards) {
     cards.forEach((card, i) => {
         const el = document.createElement('div');
         el.className = 'pile-card';
-        el.style.background = state.data[card.table].color;
+        el.style.background = getCardColor(card);
         el.style.setProperty('--pile-rot', `${card.pileRot}deg`);
         el.style.top = (i * step) + 'px';
         el.textContent = card.front;
@@ -1249,12 +1429,15 @@ function showFinished() {
 
     // Telemetry
     const totalMs = performance.now() - state.exerciseStartedAt;
-    const sorted = [...state.selectedTables].sort((a, b) => Number(a) - Number(b));
+    const tablesParam = state.level === 'L1'
+        ? `tot${state.countUpTo}`
+        : [...state.selectedTables].sort((a, b) => Number(a) - Number(b)).join(',');
     window.va?.('event', {
         name: 'round_completed',
         data: {
+            level: state.level,
             mode: state.mode,
-            tables: sorted.join(','),
+            tables: tablesParam,
             ops: state.selectedOps.join(','),
             cardCount: state.cards.length,
             rounds: state.round,
@@ -1267,8 +1450,9 @@ function showFinished() {
 
     if (typeof gtag === 'function') {
         gtag('event', 'round_completed', {
+            level: state.level,
             mode: state.mode,
-            tables: sorted.join(','),
+            tables: tablesParam,
             ops: state.selectedOps.join(','),
             card_count: state.cards.length,
             rounds: state.round,
@@ -1342,11 +1526,25 @@ function confirmReset() {
 // --- Event listeners ---
 
 function attachEventListeners() {
+    // Step 0: Level
+    document.querySelectorAll('.level-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectLevel(btn.dataset.level));
+    });
+
+    // Step 1: Tables (L2)
     selectAllBtn.addEventListener('click', selectAll);
     next1Btn.addEventListener('click', () => { playTapSound(); goToStep(2); });
-    opsButtons.forEach(btn => btn.addEventListener('click', () => toggleOp(btn)));
+
+    // Step 1a: Count-up-to (L1)
+    document.querySelectorAll('.upto-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectCountUpTo(Number(btn.dataset.upto)));
+    });
+    document.getElementById('back1a').addEventListener('click', () => { playTapSound(); goToStep(0); });
+    document.getElementById('next1a').addEventListener('click', () => { playTapSound(); goToStep(2); });
+
+    // Step 2: Ops (rendered dynamically, listeners attached in renderOpsButtons)
     document.getElementById('select-all-ops').addEventListener('click', selectAllOps);
-    back2Btn.addEventListener('click', () => { playTapSound(); goToStep(1); });
+    back2Btn.addEventListener('click', () => { playTapSound(); goToStep(state.level === 'L1' ? '1a' : 1); });
     next2Btn.addEventListener('click', () => { playTapSound(); goToStep(3); });
     back3Btn.addEventListener('click', () => { playTapSound(); goToStep(2); });
     document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -1494,14 +1692,14 @@ function attachEventListeners() {
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
             if (isIOS) {
                 installInstructions.innerHTML = `
-                    <p>Volg deze stappen om Maaltafels L2 als app te installeren:</p>
+                    <p>Volg deze stappen om Rekenflits als app te installeren:</p>
                     <p><strong>1.</strong> Tik op het deel-icoon <span class="install-icon">⎙</span> onderaan in Safari</p>
                     <p><strong>2.</strong> Scroll naar beneden en tik op <strong>"Zet op beginscherm"</strong> (of <strong>"Add to Home Screen"</strong>)</p>
                     <p><strong>3.</strong> Tik op <strong>"Voeg toe"</strong></p>
                 `;
             } else {
                 installInstructions.innerHTML = `
-                    <p>Volg deze stappen om Maaltafels L2 als app te installeren:</p>
+                    <p>Volg deze stappen om Rekenflits als app te installeren:</p>
                     <p><strong>1.</strong> Open het menu van je browser <span class="install-icon">⋮</span></p>
                     <p><strong>2.</strong> Tik op <strong>"App installeren"</strong> of <strong>"Toevoegen aan startscherm"</strong></p>
                 `;
