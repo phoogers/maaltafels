@@ -84,7 +84,11 @@ function getCardColor(card) {
 }
 
 function getL1CardsForOp(op) {
-    return state.l1data[op].filter(c => Number(c.back) <= state.countUpTo);
+    const max = state.countUpTo;
+    return state.l1data[op].filter(c => {
+        const parts = c.front.split(/\s*[+\-]\s*/);
+        return Number(parts[0]) <= max && Number(parts[1]) <= max && Number(c.back) <= max;
+    });
 }
 
 // --- Personal records ---
